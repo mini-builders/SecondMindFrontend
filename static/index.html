@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SecondMind</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #08080f;
+      --surface:   #0f0f1a;
+      --card:      #14141f;
+      --border:    #1f1f30;
+      --accent:    #7c6ef7;
+      --accent-dim:#3d3778;
+      --green:     #22c55e;
+      --amber:     #f59e0b;
+      --red:       #ef4444;
+      --text:      #e2e8f0;
+      --muted:     #4b5563;
+      --sub:       #9ca3af;
+      --radius:    14px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 16px 80px;
+    }
+
+    /* ── Header ── */
+    header {
+      width: 100%;
+      max-width: 680px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 36px;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+    .logo-icon {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, #7c6ef7, #a78bfa);
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      font-size: 16px;
+    }
+    .badge {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--sub);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+
+    /* ── Input card ── */
+    .input-card {
+      width: 100%;
+      max-width: 680px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    .input-label {
+      font-size: 12px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+    textarea {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      resize: none;
+      min-height: 90px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    textarea:focus { border-color: var(--accent); }
+    textarea::placeholder { color: var(--muted); }
+
+    .input-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 12px;
+    }
+    .char-count { font-size: 12px; color: var(--muted); }
+
+    button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 22px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    button:hover { opacity: 0.88; }
+    button:active { transform: scale(0.97); }
+    button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+    /* ── Conflict warning ── */
+    .conflict-box {
+      width: 100%;
+      max-width: 680px;
+      background: #1a1008;
+      border: 1px solid #78350f;
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      display: none;
+    }
+    .conflict-box.show { display: block; }
+    .conflict-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--amber);
+      margin-bottom: 6px;
+    }
+    .conflict-detail { font-size: 13px; color: #d97706; }
+
+    /* ── Task result ── */
+    .task-card {
+      width: 100%;
+      max-width: 680px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 24px;
+      display: none;
+      animation: slideIn 0.25s ease;
+    }
+    .task-card.show { display: block; }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .task-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .task-title-row { display: flex; align-items: center; gap: 10px; }
+    .task-icon {
+      font-size: 20px;
+      width: 40px; height: 40px;
+      background: var(--surface);
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+    .task-title { font-size: 16px; font-weight: 600; }
+    .task-type-pill {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: var(--accent-dim);
+      color: #a78bfa;
+      white-space: nowrap;
+    }
+    .task-meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .meta-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+    .meta-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.6px; }
+    .meta-value { font-size: 13px; font-weight: 500; }
+    .meta-value.green { color: var(--green); }
+    .meta-value.amber { color: var(--amber); }
+    .meta-value.red   { color: var(--red); }
+    .meta-value.purple { color: #a78bfa; }
+
+    /* ── Notifications panel ── */
+    .notif-panel {
+      width: 100%;
+      max-width: 680px;
+    }
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .panel-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--muted);
+    }
+    .notif-count {
+      background: var(--red);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 20px;
+      display: none;
+    }
+    .notif-count.show { display: inline-block; }
+    .refresh-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--sub);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 8px;
+    }
+    .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .notif-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .notif-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      animation: slideIn 0.2s ease;
+    }
+    .notif-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+    .notif-icon {
+      font-size: 18px;
+      width: 38px; height: 38px;
+      background: var(--surface);
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+    .notif-info { min-width: 0; }
+    .notif-title { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .notif-sub { font-size: 12px; color: var(--sub); margin-top: 2px; }
+
+    .notif-tags { display: flex; gap: 6px; flex-shrink: 0; align-items: center; }
+    .tag {
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+    .tag.retry { background: #0d2d1a; color: var(--green); }
+    .tag.expires { background: #2d1a0d; color: var(--amber); }
+
+    .ack-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--sub);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: 9px;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    .ack-btn:hover { border-color: var(--green); color: var(--green); }
+
+    .empty-notif {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    /* ── Spinner ── */
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      display: none;
+    }
+    .spinner.show { display: block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Separator ── */
+    .sep {
+      width: 100%;
+      max-width: 680px;
+      height: 1px;
+      background: var(--border);
+      margin: 28px 0;
+    }
+
+    .poll-indicator {
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .pulse {
+      display: inline-block;
+      width: 6px; height: 6px;
+      background: var(--green);
+      border-radius: 50%;
+      margin-right: 5px;
+      animation: pulse 2s ease infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🧠</div>
+      SecondMind
+    </div>
+    <div class="badge">AI Task Assistant</div>
+  </header>
+
+  <!-- Input -->
+  <div class="input-card">
+    <div class="input-label">What do you want to do?</div>
+    <textarea id="taskInput" placeholder='e.g. "Remind me to call Harshit at 3pm" or "Take my BP tablet at 9am"' maxlength="1000"></textarea>
+    <div class="input-footer">
+      <span class="char-count" id="charCount">0 / 1000</span>
+      <button id="submitBtn" onclick="submitTask()">
+        <div class="spinner" id="spinner"></div>
+        <span id="btnText">Add Task</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Conflict warning -->
+  <div class="conflict-box" id="conflictBox">
+    <div class="conflict-header">⚠ Time Conflict Detected</div>
+    <div class="conflict-detail" id="conflictDetail"></div>
+  </div>
+
+  <!-- Last task result -->
+  <div class="task-card" id="taskCard">
+    <div class="task-header">
+      <div class="task-title-row">
+        <div class="task-icon" id="taskIcon"></div>
+        <div class="task-title" id="taskTitle"></div>
+      </div>
+      <div class="task-type-pill" id="taskType"></div>
+    </div>
+    <div class="task-meta">
+      <div class="meta-item">
+        <div class="meta-label">Scheduled</div>
+        <div class="meta-value purple" id="taskScheduled"></div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Status</div>
+        <div class="meta-value green">scheduled</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Retry</div>
+        <div class="meta-value" id="taskRetry"></div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Expires</div>
+        <div class="meta-value" id="taskExpires"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sep"></div>
+
+  <!-- Notifications panel -->
+  <div class="notif-panel">
+    <div class="panel-header">
+      <div class="panel-title">
+        <span>Notifications</span>
+        <span class="notif-count" id="notifCount"></span>
+        <span class="poll-indicator"><span class="pulse"></span>live</span>
+      </div>
+      <button class="refresh-btn" onclick="loadNotifications()">Refresh</button>
+    </div>
+    <div class="notif-list" id="notifList">
+      <div class="empty-notif">No pending notifications right now.</div>
+    </div>
+  </div>
+
+<script>
+  const API = '/api/v1';
+
+  const ICONS = {
+    communication: '📞',
+    live_event:    '🎯',
+    medicine:      '💊',
+    meeting:       '📅',
+    errand:        '🛒',
+    personal:      '✨',
+  };
+
+  // ── Char counter ──
+  document.getElementById('taskInput').addEventListener('input', function () {
+    document.getElementById('charCount').textContent = `${this.value.length} / 1000`;
+  });
+
+  // ── Submit task ──
+  async function submitTask() {
+    const text = document.getElementById('taskInput').value.trim();
+    if (!text) return;
+
+    setLoading(true);
+    hideConflict();
+    hideTaskCard();
+
+    try {
+      const res = await fetch(`${API}/tasks/parse`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      });
+
+      const data = await res.json();
+
+      if (res.status === 409) {
+        showConflict(data.detail);
+        return;
+      }
+      if (!res.ok) {
+        alert(data.detail || 'Something went wrong.');
+        return;
+      }
+
+      showTaskCard(data);
+      document.getElementById('taskInput').value = '';
+      document.getElementById('charCount').textContent = '0 / 1000';
+      await loadNotifications();
+
+    } catch (err) {
+      alert('Could not reach the server. Is it running?');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Enter key submits (Shift+Enter for newline)
+  document.getElementById('taskInput').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      submitTask();
+    }
+  });
+
+  function setLoading(on) {
+    document.getElementById('submitBtn').disabled = on;
+    document.getElementById('spinner').classList.toggle('show', on);
+    document.getElementById('btnText').textContent = on ? 'Thinking...' : 'Add Task';
+  }
+
+  // ── Conflict box ──
+  function showConflict(detail) {
+    const box = document.getElementById('conflictBox');
+    document.getElementById('conflictDetail').textContent =
+      `"${detail.conflicting_task_title}" is already scheduled around that time.`;
+    box.classList.add('show');
+  }
+  function hideConflict() {
+    document.getElementById('conflictBox').classList.remove('show');
+  }
+
+  // ── Task card ──
+  function showTaskCard(data) {
+    const notif = data.notification;
+    document.getElementById('taskIcon').textContent = ICONS[data.task_type] || '📌';
+    document.getElementById('taskTitle').textContent = data.title;
+    document.getElementById('taskType').textContent = data.task_type.replace('_', ' ');
+    document.getElementById('taskScheduled').textContent = data.scheduled_time
+      ? formatDateTime(data.scheduled_time) : 'No specific time';
+
+    const retryEl = document.getElementById('taskRetry');
+    if (notif.retry) {
+      retryEl.textContent = `Every ${notif.retry_interval_minutes} min`;
+      retryEl.className = 'meta-value green';
+    } else {
+      retryEl.textContent = 'No retry';
+      retryEl.className = 'meta-value';
+    }
+
+    const expiresEl = document.getElementById('taskExpires');
+    if (notif.expires && notif.expires_at) {
+      expiresEl.textContent = formatDateTime(notif.expires_at);
+      expiresEl.className = 'meta-value amber';
+    } else {
+      expiresEl.textContent = 'Never expires';
+      expiresEl.className = 'meta-value';
+    }
+
+    document.getElementById('taskCard').classList.add('show');
+  }
+  function hideTaskCard() {
+    document.getElementById('taskCard').classList.remove('show');
+  }
+
+  // ── Notifications ──
+  async function loadNotifications() {
+    try {
+      const res = await fetch(`${API}/notifications`);
+      const list = await res.json();
+      renderNotifications(list);
+    } catch (_) {}
+  }
+
+  function renderNotifications(list) {
+    const container = document.getElementById('notifList');
+    const countEl = document.getElementById('notifCount');
+
+    if (!list.length) {
+      container.innerHTML = '<div class="empty-notif">No pending notifications right now.</div>';
+      countEl.classList.remove('show');
+      return;
+    }
+
+    countEl.textContent = list.length;
+    countEl.classList.add('show');
+
+    container.innerHTML = list.map(n => {
+      const nid = n._id || n.id;
+      return `
+      <div class="notif-card" id="notif-${nid}">
+        <div class="notif-left">
+          <div class="notif-icon">${ICONS[n.task_type] || '🔔'}</div>
+          <div class="notif-info">
+            <div class="notif-title">${escHtml(n.task_title)}</div>
+            <div class="notif-sub">${n.scheduled_at ? formatDateTime(n.scheduled_at) : 'Unscheduled'}
+              ${n.expires && n.expires_at ? ' · expires ' + formatDateTime(n.expires_at) : ''}
+            </div>
+          </div>
+        </div>
+        <div class="notif-tags">
+          ${n.retry ? `<span class="tag retry">🔁 ${n.retry_interval_minutes}m</span>` : ''}
+          ${n.expires ? `<span class="tag expires">⏳</span>` : ''}
+        </div>
+        <button class="ack-btn" onclick="acknowledgeNotif('${nid}')">Got it ✓</button>
+      </div>`;
+    }).join('');
+  }
+
+  async function acknowledgeNotif(id) {
+    const card = document.getElementById(`notif-${id}`);
+    if (card) {
+      card.style.opacity = '0.4';
+      card.style.pointerEvents = 'none';
+    }
+    try {
+      await fetch(`${API}/notifications/${id}/acknowledge`, { method: 'PATCH' });
+    } finally {
+      await loadNotifications();
+    }
+  }
+
+  // ── Helpers ──
+  function formatDateTime(iso) {
+    const d = new Date(iso);
+    return d.toLocaleString('en-IN', {
+      day: 'numeric', month: 'short',
+      hour: '2-digit', minute: '2-digit',
+      hour12: true,
+    });
+  }
+
+  function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // ── Auto-poll every 30s ──
+  loadNotifications();
+  setInterval(loadNotifications, 30000);
+</script>
+</body>
+</html>

@@ -9,11 +9,14 @@ PyObjectId = Annotated[str, BeforeValidator(str)]
 
 class NotificationDocument(BaseModel):
     id: PyObjectId = Field(alias="_id")
+    user_id: str
     task_id: str
     task_title: str
     task_type: str
-    scheduled_at: datetime | None
-    status: str   # pending | sent | acknowledged | expired
+    category: str = "Personal"
+    scheduled_at: datetime | None = None
+    next_notify_at: datetime | None = None
+    status: str   # pending | acknowledged | expired
     retry: bool
     retry_interval_minutes: int
     expires: bool

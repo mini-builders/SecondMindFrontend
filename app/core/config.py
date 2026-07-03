@@ -8,6 +8,10 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     mongodb_uri: str
     mongodb_database: str = "secondmind"
+    secret_key: str
+    vapid_public_key: str = ""
+    vapid_private_key: str = ""
+    vapid_claim_email: str = ""
 
     model_config = {"env_file": ".env", "case_sensitive": False}
 

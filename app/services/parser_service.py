@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 
+from app.core.notification_rules import get_rules
 from app.db.client import find_conflicting_task, get_notifications_collection, get_tasks_collection
 from app.exceptions import TaskConflictError
 from app.llm.client import get_groq_client
@@ -17,16 +18,17 @@ def _to_datetime(value: str | None) -> datetime | None:
     return datetime.fromisoformat(value)
 
 
-async def parse_task(text: str) -> ParseResponse:
-    """Extract task from natural language, check for conflicts, persist task + notification."""
+async def parse_task(text: str, user_id: str) -> ParseResponse:
     client = get_groq_client()
     raw = await extract_task_from_text(client, text)
 
     scheduled_time = _to_datetime(raw.get("scheduled_time"))
+    category = raw.get("category", "Personal")
+    rules = get_rules(category)
     tasks_collection = get_tasks_collection()
 
     if scheduled_time:
-        existing = await find_conflicting_task(tasks_collection, scheduled_time)
+        existing = await find_conflicting_task(tasks_collection, scheduled_time, user_id)
         if existing:
             logger.warning(
                 "Time conflict | new=%s | existing=%s (%s)",
@@ -38,11 +40,15 @@ async def parse_task(text: str) -> ParseResponse:
             )
 
     now = datetime.now(timezone.utc)
+    anchor = scheduled_time or now
+    expires_at = (anchor + rules["expires_delta"]) if rules["expires"] and rules["expires_delta"] else None
 
     task_doc = {
+        "user_id": user_id,
         "title": raw["title"],
         "original_text": text,
         "task_type": raw["task_type"],
+        "category": category,
         "scheduled_time": scheduled_time,
         "status": "scheduled",
         "retry_count": 0,
@@ -54,20 +60,23 @@ async def parse_task(text: str) -> ParseResponse:
     task_doc["_id"] = task_result.inserted_id
 
     logger.info(
-        "Task saved | id=%s | title=%s | task_type=%s",
-        task_result.inserted_id, raw["title"], raw["task_type"],
+        "Task saved | id=%s | title=%s | category=%s | user_id=%s",
+        task_result.inserted_id, raw["title"], category, user_id,
     )
 
     notification_doc = {
+        "user_id": user_id,
         "task_id": str(task_result.inserted_id),
         "task_title": raw["title"],
         "task_type": raw["task_type"],
+        "category": category,
         "scheduled_at": scheduled_time,
+        "next_notify_at": scheduled_time or now,
         "status": "pending",
-        "retry": raw.get("retry", False),
-        "retry_interval_minutes": raw.get("retry_interval_minutes", 0),
-        "expires": raw.get("expires", False),
-        "expires_at": _to_datetime(raw.get("expires_at")),
+        "retry": rules["retry"],
+        "retry_interval_minutes": rules["retry_interval_minutes"],
+        "expires": rules["expires"],
+        "expires_at": expires_at,
         "created_at": now,
     }
 
@@ -76,9 +85,9 @@ async def parse_task(text: str) -> ParseResponse:
     notification_doc["_id"] = notification_result.inserted_id
 
     logger.info(
-        "Notification saved | id=%s | task_id=%s | retry=%s | expires=%s",
-        notification_result.inserted_id, task_result.inserted_id,
-        raw.get("retry"), raw.get("expires"),
+        "Notification saved | id=%s | category=%s | retry=%s | interval=%smin | expires=%s",
+        notification_result.inserted_id, category, rules["retry"],
+        rules["retry_interval_minutes"], expires_at,
     )
 
     return ParseResponse(

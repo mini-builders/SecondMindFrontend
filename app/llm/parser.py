@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from groq import AsyncGroq
 
@@ -9,10 +9,12 @@ from app.llm.prompts import TASK_EXTRACTION_SYSTEM_PROMPT, build_user_message
 
 logger = get_logger(__name__)
 
+_IST = timezone(timedelta(hours=5, minutes=30))
+
 
 async def extract_task_from_text(client: AsyncGroq, text: str) -> dict:
     """Send user text to the LLM and return the extracted task as a raw dict."""
-    current_datetime = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S UTC")
+    current_datetime = datetime.now(_IST).strftime("%Y-%m-%dT%H:%M:%S IST")
     user_message = build_user_message(text, current_datetime)
 
     logger.debug("Sending to Groq | model=%s | text=%s", settings.groq_model, text)

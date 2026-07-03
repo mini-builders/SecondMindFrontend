@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
+from app.core.auth import get_current_user
 from app.core.logger import get_logger
 from app.exceptions import TaskConflictError
 from app.models.request import ParseRequest
@@ -12,12 +13,15 @@ router = APIRouter()
 
 
 @router.post("/parse", response_model=ParseResponse, status_code=status.HTTP_201_CREATED)
-async def parse_task_route(request: ParseRequest) -> ParseResponse:
-    """Parse a natural language task description and save it to the database."""
-    logger.info("Incoming parse request | text=%s", request.text)
+async def parse_task_route(
+    request: ParseRequest,
+    current_user: dict = Depends(get_current_user),
+) -> ParseResponse:
+    user_id = str(current_user["_id"])
+    logger.info("Incoming parse request | user_id=%s | text=%s", user_id, request.text)
 
     try:
-        return await parse_task(request.text)
+        return await parse_task(request.text, user_id=user_id)
     except TaskConflictError as exc:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -28,13 +32,7 @@ async def parse_task_route(request: ParseRequest) -> ParseResponse:
             },
         )
     except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=str(exc),
-        )
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
     except Exception as exc:
         logger.error("Unexpected error: %s", exc, exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to process task. Please try again.",
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to process task.")

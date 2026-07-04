@@ -1,6 +1,8 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from app.core.notification_rules import get_rules
+
+_IST = timezone(timedelta(hours=5, minutes=30))
 from app.db.client import find_conflicting_task, get_notifications_collection, get_tasks_collection
 from app.exceptions import TaskConflictError
 from app.llm.client import get_groq_client
@@ -15,7 +17,10 @@ logger = get_logger(__name__)
 def _to_datetime(value: str | None) -> datetime | None:
     if value is None:
         return None
-    return datetime.fromisoformat(value)
+    dt = datetime.fromisoformat(value)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=_IST)
+    return dt
 
 
 async def parse_task(text: str, user_id: str) -> ParseResponse:
@@ -71,8 +76,9 @@ async def parse_task(text: str, user_id: str) -> ParseResponse:
         "task_type": raw["task_type"],
         "category": category,
         "scheduled_at": scheduled_time,
-        "next_notify_at": scheduled_time or now,
-        "status": "pending",
+        "next_fire_at": scheduled_time or now,
+        "fire_count": 0,
+        "status": "active",
         "retry": rules["retry"],
         "retry_interval_minutes": rules["retry_interval_minutes"],
         "expires": rules["expires"],

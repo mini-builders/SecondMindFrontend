@@ -32,6 +32,10 @@ def get_notifications_collection() -> AsyncIOMotorCollection:
     return _client[settings.mongodb_database]["notifications"]
 
 
+def get_notification_events_collection() -> AsyncIOMotorCollection:
+    return _client[settings.mongodb_database]["notification_events"]
+
+
 def get_users_collection() -> AsyncIOMotorCollection:
     return _client[settings.mongodb_database]["users"]
 
@@ -78,84 +82,103 @@ async def find_conflicting_task(
     )
 
 
-# ── Notification queries ──
+# ── Notification config (scheduler reads) ──
 
-def _pending_filter(user_id: str, now: datetime) -> dict:
-    return {
-        "user_id": user_id,
-        "status": "pending",
-        "$and": [
-            {
-                "$or": [
-                    {"next_notify_at": {"$lte": now}},
-                    {"next_notify_at": {"$exists": False}, "scheduled_at": {"$lte": now}},
-                    {"next_notify_at": None, "scheduled_at": {"$lte": now}},
-                ]
-            },
-            {
-                "$or": [
-                    {"expires": False},
-                    {"expires_at": {"$gt": now}},
-                ]
-            },
-        ],
-    }
-
-
-async def get_pending_notifications(user_id: str) -> list[dict]:
-    """All pending notifications for the bell — shows everything until acknowledged."""
-    cursor = get_notifications_collection().find(
-        {"user_id": user_id, "status": "pending"},
-        sort=[("scheduled_at", 1)],
-    )
-    return await cursor.to_list(length=100)
-
-
-async def get_pending_notifications_count(user_id: str) -> int:
-    return await get_notifications_collection().count_documents(
-        {"user_id": user_id, "status": "pending"}
-    )
-
-
-async def advance_retry_notifications(user_id: str) -> None:
-    """When bell is opened: snooze all retry notifications so they come back later."""
-    collection = get_notifications_collection()
-    now = datetime.now(timezone.utc)
-    docs = await collection.find({
-        **_pending_filter(user_id, now),
-        "retry": True,
-    }).to_list(length=100)
-
-    for doc in docs:
-        interval = doc.get("retry_interval_minutes", 10)
-        await collection.update_one(
-            {"_id": doc["_id"]},
-            {"$set": {"next_notify_at": now + timedelta(minutes=interval)}},
-        )
-
-
-async def get_due_for_push(now: datetime) -> list[dict]:
-    """Notifications due for a push: pending, next_notify_at <= now, not expired."""
+async def get_due_notification_configs(now: datetime) -> list[dict]:
+    """Active configs whose next_fire_at has arrived."""
     cursor = get_notifications_collection().find({
-        "status": "pending",
-        "$and": [
-            {
-                "$or": [
-                    {"next_notify_at": {"$lte": now}},
-                    {"next_notify_at": {"$exists": False}, "scheduled_at": {"$lte": now}},
-                    {"next_notify_at": None, "scheduled_at": {"$lte": now}},
-                ]
-            },
-            {
-                "$or": [
-                    {"expires": False},
-                    {"expires_at": {"$gt": now}},
-                ]
-            },
-        ],
+        "status": "active",
+        "next_fire_at": {"$lte": now},
     })
     return await cursor.to_list(length=500)
 
+
+async def get_notifications_to_expire(now: datetime) -> list[dict]:
+    """Active configs whose expiry window has passed."""
+    cursor = get_notifications_collection().find({
+        "status": "active",
+        "expires": True,
+        "expires_at": {"$lte": now},
+    })
+    return await cursor.to_list(length=500)
+
+
+async def update_notification_after_fire(notification_id, next_fire_at: datetime, fire_count: int) -> None:
+    await get_notifications_collection().update_one(
+        {"_id": notification_id},
+        {"$set": {"next_fire_at": next_fire_at, "fire_count": fire_count}},
+    )
+
+
+async def complete_notification_config(notification_id) -> None:
+    await get_notifications_collection().update_one(
+        {"_id": notification_id},
+        {"$set": {"status": "completed"}},
+    )
+
+
+async def expire_notification_config(notification_id) -> None:
+    await get_notifications_collection().update_one(
+        {"_id": notification_id},
+        {"$set": {"status": "expired"}},
+    )
+
+
+# ── Notification events (bell reads) ──
+
+async def create_notification_event(config: dict, fire_number: int, fired_at: datetime) -> dict:
+    doc = {
+        "user_id": config["user_id"],
+        "notification_id": str(config["_id"]),
+        "task_id": config["task_id"],
+        "task_title": config["task_title"],
+        "task_type": config.get("task_type", "personal"),
+        "category": config.get("category", "Personal"),
+        "fired_at": fired_at,
+        "fire_number": fire_number,
+        "status": "pending",
+        "created_at": fired_at,
+    }
+    result = await get_notification_events_collection().insert_one(doc)
+    doc["_id"] = result.inserted_id
+    return doc
+
+
+async def expire_task_events(task_id: str, user_id: str) -> None:
+    """Mark all pending events for a task as task_expired."""
+    await get_notification_events_collection().update_many(
+        {"task_id": task_id, "user_id": user_id, "status": "pending"},
+        {"$set": {"status": "task_expired"}},
+    )
+
+
+async def get_bell_events(user_id: str) -> list[dict]:
+    """All events shown in the bell — pending fires and expired task events."""
+    cursor = get_notification_events_collection().find(
+        {"user_id": user_id, "status": {"$in": ["pending", "task_expired"]}},
+        sort=[("fired_at", -1)],
+    )
+    return await cursor.to_list(length=200)
+
+
+async def get_bell_events_count(user_id: str) -> int:
+    return await get_notification_events_collection().count_documents(
+        {"user_id": user_id, "status": {"$in": ["pending", "task_expired"]}}
+    )
+
+
+async def mark_task_done(task_id: str, user_id: str) -> None:
+    """User marked task done — delete all its events and stop the config."""
+    await get_notification_events_collection().delete_many(
+        {"task_id": task_id, "user_id": user_id},
+    )
+    await get_notifications_collection().update_many(
+        {"task_id": task_id, "user_id": user_id},
+        {"$set": {"status": "completed"}},
+    )
+
+
+# ── Push subscriptions ──
 
 async def get_push_subscriptions_for_user(user_id: str) -> list[dict]:
     cursor = get_push_subscriptions_collection().find({"user_id": user_id})
@@ -173,12 +196,3 @@ async def save_push_subscription(user_id: str, subscription: dict) -> None:
 
 async def delete_push_subscription(endpoint: str) -> None:
     await get_push_subscriptions_collection().delete_one({"endpoint": endpoint})
-
-
-async def acknowledge_notification(notification_id: str, user_id: str) -> bool:
-    collection = get_notifications_collection()
-    result = await collection.update_one(
-        {"_id": ObjectId(notification_id), "status": "pending", "user_id": user_id},
-        {"$set": {"status": "acknowledged"}},
-    )
-    return result.modified_count == 1

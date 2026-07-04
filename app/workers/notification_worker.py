@@ -2,9 +2,14 @@ from datetime import datetime, timedelta, timezone
 
 from app.core.logger import get_logger
 from app.db.client import (
-    get_due_for_push,
-    get_notifications_collection,
+    complete_notification_config,
+    create_notification_event,
+    expire_notification_config,
+    expire_task_events,
+    get_due_notification_configs,
+    get_notifications_to_expire,
     get_push_subscriptions_for_user,
+    update_notification_after_fire,
 )
 from app.services.push_service import send_push
 
@@ -12,52 +17,54 @@ logger = get_logger(__name__)
 
 
 async def run_push_worker() -> None:
-    """Called every 60 s by APScheduler — sends web push for due notifications."""
     now = datetime.now(timezone.utc)
-    docs = await get_due_for_push(now)
 
-    if not docs:
+    # Expire overdue configs first, then fire due ones
+    await _expire_overdue(now)
+
+    due = await get_due_notification_configs(now)
+    if not due:
         return
 
-    logger.info("Push worker | %d due notifications", len(docs))
+    logger.info("Push worker | %d due", len(due))
 
-    for doc in docs:
-        user_id = doc.get("user_id", "")
-        subs = await get_push_subscriptions_for_user(user_id)
-        if not subs:
-            continue
+    for config in due:
+        fire_number = config.get("fire_count", 0) + 1
 
-        title = doc.get("task_title", "Reminder")
-        task_type = doc.get("task_type", "personal")
-        body = _body_for_type(task_type, title)
+        await create_notification_event(config, fire_number, now)
 
-        sent_any = False
+        subs = await get_push_subscriptions_for_user(config["user_id"])
         for sub in subs:
-            ok = await send_push(
+            await send_push(
                 sub,
-                title=title,
-                body=body,
-                data={"notification_id": str(doc["_id"]), "task_type": task_type},
+                title=config["task_title"],
+                body=_push_body(config, fire_number),
+                data={"task_id": config["task_id"], "category": config.get("category", "Personal")},
             )
-            if ok:
-                sent_any = True
 
-        if sent_any and doc.get("retry"):
-            interval = doc.get("retry_interval_minutes", 10) or 10
-            next_at = now + timedelta(minutes=interval)
-            await get_notifications_collection().update_one(
-                {"_id": doc["_id"]},
-                {"$set": {"next_notify_at": next_at}},
+        if config.get("retry"):
+            interval = config.get("retry_interval_minutes", 20) or 20
+            await update_notification_after_fire(
+                config["_id"],
+                next_fire_at=now + timedelta(minutes=interval),
+                fire_count=fire_number,
             )
-            logger.debug("Scheduled retry | id=%s | next=%s", doc["_id"], next_at)
+        else:
+            await complete_notification_config(config["_id"])
+
+        logger.debug("Fired | task=%s | fire#=%d | retry=%s", config["task_id"], fire_number, config.get("retry"))
 
 
-def _body_for_type(task_type: str, title: str) -> str:
-    prompts = {
-        "medicine": "Time to take your medicine.",
-        "meeting": "Your meeting is coming up.",
-        "communication": "Don't forget to follow up.",
-        "live_event": "It's starting soon!",
-        "errand": "Don't forget this errand.",
-    }
-    return prompts.get(task_type, f"Reminder: {title}")
+async def _expire_overdue(now: datetime) -> None:
+    configs = await get_notifications_to_expire(now)
+    for config in configs:
+        await expire_notification_config(config["_id"])
+        await expire_task_events(config["task_id"], config["user_id"])
+        logger.info("Expired | task=%s | total_fires=%d", config["task_id"], config.get("fire_count", 0))
+
+
+def _push_body(config: dict, fire_number: int) -> str:
+    title = config.get("task_title", "Reminder")
+    if fire_number == 1:
+        return f"{title}"
+    return f"Reminder #{fire_number}: {title}"

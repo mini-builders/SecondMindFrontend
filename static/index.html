@@ -318,6 +318,14 @@
       cursor: pointer; transition: all 0.15s;
     }
     .ack-btn:hover { border-color: var(--green); color: var(--green); }
+    .ack-btn.expired-btn { border-color: #78350f; color: var(--amber); }
+    .ack-btn.expired-btn:hover { border-color: var(--amber); }
+
+    .notif-card.expired {
+      border-color: #78350f;
+      background: #1a1008;
+    }
+    .ntag.expired-badge { background: #2d1a0d; color: var(--amber); }
 
     .empty-notif {
       text-align: center; color: var(--muted);
@@ -727,37 +735,46 @@
       return;
     }
 
-    sub.textContent = `${list.length} pending`;
+    sub.textContent = `${list.length} notification${list.length !== 1 ? 's' : ''}`;
     container.innerHTML = list.map(n => {
-      const nid       = n._id || n.id;
-      const category  = n.category || 'Personal';
-      const catIcon   = CAT_ICONS[category] || '🔔';
-      const catColor  = CAT_COLORS[category] || '#7c6ef7';
-      const lifecycle = CAT_LIFECYCLE[category] || '';
-      const expTag    = n.expires && n.expires_at
-        ? `<span class="ntag expires">⏳ until ${formatDT(n.expires_at)}</span>` : '';
-      return `<div class="notif-card" id="notif-${nid}">
+      const eid      = n._id || n.id;
+      const expired  = n.status === 'task_expired';
+      const category = n.category || 'Personal';
+      const catIcon  = CAT_ICONS[category] || '🔔';
+      const catColor = CAT_COLORS[category] || '#7c6ef7';
+      const fireLabel = ordinal(n.fire_number || 1) + ' reminder';
+
+      return `<div class="notif-card ${expired ? 'expired' : ''}" id="notif-${eid}" data-task-id="${n.task_id}">
         <div class="notif-top">
           <span class="notif-icon-sm">${catIcon}</span>
           <span class="notif-title">${escHtml(n.task_title)}</span>
           <span class="ntag" style="background:${catColor}22;color:${catColor};margin-left:auto">${category}</span>
+          ${expired ? '<span class="ntag expired-badge">Expired</span>' : ''}
         </div>
-        <div class="notif-time">${n.scheduled_at ? formatDT(n.scheduled_at) : 'Anytime'}</div>
-        <div class="notif-tags">
-          <span class="ntag retry">🔔 ${lifecycle}</span>
-          ${expTag}
-        </div>
-        <button class="ack-btn" onclick="acknowledgeNotif('${nid}')">Got it ✓</button>
+        <div class="notif-time">${fireLabel} · ${formatDT(n.fired_at)}${expired ? ' · Missed' : ''}</div>
+        <button class="ack-btn ${expired ? 'expired-btn' : ''}" onclick="doneTask('${n.task_id}')">
+          ${expired ? 'Clear ✓' : 'Done ✓'}
+        </button>
       </div>`;
     }).join('');
   }
 
-  async function acknowledgeNotif(id) {
-    const card = document.getElementById(`notif-${id}`);
-    if (card) { card.style.opacity = '0.4'; card.style.pointerEvents = 'none'; }
-    await fetch(`${API}/notifications/${id}/acknowledge`, { method: 'PATCH', headers: authHeaders() });
+  async function doneTask(taskId) {
+    document.querySelectorAll(`[data-task-id="${taskId}"]`).forEach(card => {
+      card.style.opacity = '0.4';
+      card.style.pointerEvents = 'none';
+    });
+    try {
+      await fetch(`${API}/notifications/${taskId}/done`, { method: 'POST', headers: authHeaders() });
+    } catch (_) {}
     await updateCount();
     if (bellOpen) await openBell();
+  }
+
+  function ordinal(n) {
+    const s = ['th', 'st', 'nd', 'rd'];
+    const v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
   }
 
   async function updateCount() {
@@ -791,6 +808,7 @@
   // ── Helpers ──
   function formatDT(iso) {
     return new Date(iso).toLocaleString('en-IN', {
+      timeZone: 'Asia/Kolkata',
       day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true,
     });
   }

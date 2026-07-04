@@ -6,7 +6,7 @@ Extract structured task information from the user's natural language input.
 Return ONLY a valid JSON object with these exact fields:
 
 - "title": string — the core action to be done (concise, action-oriented, e.g. "Call Rahul")
-- "scheduled_time": ISO 8601 datetime string (e.g. "2026-07-01T19:00:00"), or null if no specific time is mentioned
+- "scheduled_time": ISO 8601 datetime string in IST (e.g. "2026-07-01T19:00:00+05:30"), or null if no specific time is mentioned. Always include the +05:30 offset.
 - "task_type": classify into exactly one of:
   - "communication" — calls, messages, follow-ups with a specific person
   - "live_event"    — sports matches, concerts, shows — has a fixed time window

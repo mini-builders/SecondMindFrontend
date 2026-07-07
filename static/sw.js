@@ -21,12 +21,12 @@ self.addEventListener('push', function (event) {
 
 self.addEventListener('notificationclick', function (event) {
   event.notification.close();
-  const notificationId = event.notification.data && event.notification.data.notification_id;
+  const taskId = event.notification.data && event.notification.data.task_id;
 
-  if (event.action === 'acknowledge' && notificationId) {
+  if (event.action === 'acknowledge' && taskId) {
     event.waitUntil(
-      fetch(`/api/v1/notifications/${notificationId}/acknowledge`, {
-        method: 'PATCH',
+      fetch(`/api/v1/notifications/${taskId}/done`, {
+        method: 'POST',
         headers: { Authorization: 'Bearer ' + (self.__token || '') },
       })
     );
@@ -34,7 +34,7 @@ self.addEventListener('notificationclick', function (event) {
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (clientList) {
-      const url = notificationId ? `/?bell=1&nid=${notificationId}` : '/?bell=1';
+      const url = taskId ? `/?bell=1&tid=${taskId}` : '/?bell=1';
       for (const client of clientList) {
         if ('focus' in client) return client.focus();
       }

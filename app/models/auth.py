@@ -17,3 +17,8 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
     user_name: str
     user_id: str
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str = Field(min_length=6)

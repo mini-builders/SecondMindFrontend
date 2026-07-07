@@ -23,13 +23,20 @@ def _to_datetime(value: str | None) -> datetime | None:
     return dt
 
 
-async def parse_task(text: str, user_id: str) -> ParseResponse:
+async def parse_task(
+    text: str,
+    user_id: str,
+    category: str | None = None,
+    priority: str | None = None,
+) -> ParseResponse:
     client = get_groq_client()
     raw = await extract_task_from_text(client, text)
 
     scheduled_time = _to_datetime(raw.get("scheduled_time"))
-    category = raw.get("category", "Personal")
-    rules = get_rules(category)
+    final_category = category if category else raw.get("category", "personal")
+    final_priority = priority if priority else raw.get("priority", "medium")
+    
+    rules = get_rules(final_category)
     tasks_collection = get_tasks_collection()
 
     if scheduled_time:
@@ -53,7 +60,8 @@ async def parse_task(text: str, user_id: str) -> ParseResponse:
         "title": raw["title"],
         "original_text": text,
         "task_type": raw["task_type"],
-        "category": category,
+        "category": final_category,
+        "priority": final_priority,
         "scheduled_time": scheduled_time,
         "status": "scheduled",
         "retry_count": 0,
@@ -66,7 +74,7 @@ async def parse_task(text: str, user_id: str) -> ParseResponse:
 
     logger.info(
         "Task saved | id=%s | title=%s | category=%s | user_id=%s",
-        task_result.inserted_id, raw["title"], category, user_id,
+        task_result.inserted_id, raw["title"], final_category, user_id,
     )
 
     notification_doc = {
@@ -74,7 +82,7 @@ async def parse_task(text: str, user_id: str) -> ParseResponse:
         "task_id": str(task_result.inserted_id),
         "task_title": raw["title"],
         "task_type": raw["task_type"],
-        "category": category,
+        "category": final_category,
         "scheduled_at": scheduled_time,
         "next_fire_at": scheduled_time or now,
         "fire_count": 0,
@@ -92,7 +100,7 @@ async def parse_task(text: str, user_id: str) -> ParseResponse:
 
     logger.info(
         "Notification saved | id=%s | category=%s | retry=%s | interval=%smin | expires=%s",
-        notification_result.inserted_id, category, rules["retry"],
+        notification_result.inserted_id, final_category, rules["retry"],
         rules["retry_interval_minutes"], expires_at,
     )
 

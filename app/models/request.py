@@ -9,3 +9,5 @@ class ParseRequest(BaseModel):
         description="Natural language task description",
         examples=["Remind me to call Rahul tomorrow at 7 PM"],
     )
+    category: str | None = None
+    priority: str | None = None

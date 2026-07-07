@@ -25,7 +25,7 @@ class NotificationDocument(BaseModel):
     expires_at: datetime | None = None
     created_at: datetime
 
-    model_config = ConfigDict(populate_by_name=True)
+    model_config = ConfigDict(populate_by_name=True, serialize_by_alias=True)
 
 
 class NotificationEventDocument(BaseModel):
@@ -42,4 +42,4 @@ class NotificationEventDocument(BaseModel):
     status: str  # pending | task_expired
     created_at: datetime
 
-    model_config = ConfigDict(populate_by_name=True)
+    model_config = ConfigDict(populate_by_name=True, serialize_by_alias=True)

@@ -82,6 +82,40 @@ async def find_conflicting_task(
     )
 
 
+async def get_user_tasks(user_id: str) -> list[dict]:
+    cursor = get_tasks_collection().find({"user_id": user_id}, sort=[("created_at", -1)])
+    return await cursor.to_list(length=100)
+
+
+async def get_pending_user_tasks(user_id: str) -> list[dict]:
+    cursor = get_tasks_collection().find(
+        {"user_id": user_id, "status": "scheduled"},
+        sort=[("scheduled_time", 1)],
+    )
+    return await cursor.to_list(length=100)
+
+
+async def delete_completed_tasks(user_id: str) -> int:
+    tasks_col = get_tasks_collection()
+    notifs_col = get_notifications_collection()
+    events_col = get_notification_events_collection()
+
+    completed = await tasks_col.find(
+        {"user_id": user_id, "status": "completed"},
+        {"_id": 1},
+    ).to_list(length=500)
+
+    if not completed:
+        return 0
+
+    ids = [str(doc["_id"]) for doc in completed]
+
+    await events_col.delete_many({"user_id": user_id, "task_id": {"$in": ids}})
+    await notifs_col.delete_many({"user_id": user_id, "task_id": {"$in": ids}})
+    result = await tasks_col.delete_many({"user_id": user_id, "status": "completed"})
+    return result.deleted_count
+
+
 # ── Notification config (scheduler reads) ──
 
 async def get_due_notification_configs(now: datetime) -> list[dict]:
@@ -175,6 +209,10 @@ async def mark_task_done(task_id: str, user_id: str) -> None:
     await get_notifications_collection().update_many(
         {"task_id": task_id, "user_id": user_id},
         {"$set": {"status": "completed"}},
+    )
+    await get_tasks_collection().update_one(
+        {"_id": ObjectId(task_id), "user_id": user_id},
+        {"$set": {"status": "completed", "updated_at": datetime.now(timezone.utc)}},
     )
 
 

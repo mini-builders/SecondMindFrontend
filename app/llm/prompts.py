@@ -15,15 +15,19 @@ Return ONLY a valid JSON object with these exact fields:
   - "errand"        — shopping, chores, physical tasks
   - "personal"      — general personal reminders that do not fit the above
 - "category": classify into exactly one of:
-  - "Travel"        — flights, trains, commute, trips, hotel bookings, cab
-  - "Health"        — medicine, doctor, hospital, gym, workout, diet, yoga
-  - "Study"         — study, homework, exam, course, reading, revision, class
-  - "Work"          — meetings, deadlines, office, projects, standup, client
-  - "Finance"       — bills, payments, EMI, recharge, tax, insurance, rent
-  - "Entertainment" — movies, matches, concerts, shows, games, music, cricket
-  - "Social"        — calls, birthdays, anniversaries, family, friends, parties
-  - "Home"          — chores, grocery, cleaning, cooking, repairs, laundry
-  - "Personal"      — prayer, namaz, pooja, meditation, sleep, habits, journal
+  - "work"          — office, work tasks, projects, standup, deadlines, meeting
+  - "health"        — exercise, medicines, doctor, gym, health habits, diet
+  - "shopping"      — buying items, groceries, shopping list
+  - "financial"     — payments, bills, credit card, bank, EMI, tax, rent
+  - "social"        — calls to family/friends, meetups, parties, birthdays
+  - "home"          — chores, cooking, cleaning, laundry, home maintenance
+  - "learning"      — study, homework, online course, reading, skills
+  - "travel"        — flight, train, commute, bookings, travel arrangements
+  - "entertainment" — movies, shows, games, sports, cricket, concerts
+- "priority": classify into exactly one of:
+  - "high"
+  - "medium"
+  - "low"
 
 Rules:
 - Use the provided current datetime to resolve relative expressions like "tomorrow", "at 3pm", "in 2 hours".

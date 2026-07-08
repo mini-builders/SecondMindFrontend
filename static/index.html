@@ -110,20 +110,21 @@
       color: var(--primary-blue);
     }
 
-    .priority-select {
-      background-color: var(--surface-2);
-      border: 0.5px solid var(--border-color);
-      color: var(--text-secondary);
+    .priority-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
       font-size: 11px;
-      padding: 2px 4px;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      outline: none;
-      transition: all 0.15s;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 20px;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
     }
-    .priority-select:focus {
-      border-color: var(--primary-blue);
-    }
+    .priority-badge.high { background: rgba(226,75,74,0.12); color: var(--urgent-red); }
+    .priority-badge.medium { background: rgba(186,117,23,0.12); color: var(--high-amber); }
+    .priority-badge.low { background: rgba(55,138,221,0.12); color: var(--primary-blue); }
+    .priority-badge .ai-dot { font-size: 8px; opacity: 0.7; }
 
     .input-group select {
       height: 44px;
@@ -504,41 +505,114 @@
       align-items: center;
       gap: 12px;
     }
+    /* ── User chip – rounded rectangle ── */
+    @keyframes chipShimmer {
+      0%   { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    @keyframes avatarPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(55,138,221,0.45); }
+      50%       { box-shadow: 0 0 0 5px rgba(55,138,221,0); }
+    }
+    @keyframes chipPress {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(0.95); }
+      100% { transform: scale(1); }
+    }
     .user-chip {
       display: flex;
       align-items: center;
-      gap: 6px;
-      background-color: var(--surface-1);
-      border: 0.5px solid var(--border-color);
-      border-radius: 20px;
-      padding: 4px 12px 4px 6px;
+      gap: 8px;
+      background: var(--surface-1);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 5px 14px 5px 7px;
       font-size: 13px;
       font-weight: 500;
+      cursor: pointer;
+      color: var(--text-primary);
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.25s, box-shadow 0.25s, color 0.25s, background 0.25s;
+    }
+    /* Shimmer sweep on hover */
+    .user-chip::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        105deg,
+        transparent 35%,
+        rgba(55,138,221,0.18) 50%,
+        transparent 65%
+      );
+      background-size: 200% 100%;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .user-chip:hover::before {
+      opacity: 1;
+      animation: chipShimmer 0.7s ease forwards;
+    }
+    .user-chip:hover {
+      border-color: var(--primary-blue);
+      box-shadow: 0 0 0 3px rgba(55,138,221,0.15), 0 2px 10px rgba(55,138,221,0.12);
+      color: var(--primary-blue);
+      background: rgba(55,138,221,0.05);
+    }
+    .user-chip:active {
+      animation: chipPress 0.18s ease;
+      box-shadow: 0 0 0 2px rgba(55,138,221,0.25);
     }
     .user-avatar {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background-color: rgba(55, 138, 221, 0.2);
+      width: 24px;
+      height: 24px;
+      border-radius: 7px;
+      background: linear-gradient(135deg, rgba(55,138,221,0.25), rgba(124,58,237,0.2));
+      border: 1px solid rgba(55,138,221,0.3);
       display: grid;
       place-items: center;
       color: var(--primary-blue);
       font-size: 12px;
+      transition: all 0.25s;
+      flex-shrink: 0;
     }
+    .user-chip:hover .user-avatar {
+      background: linear-gradient(135deg, rgba(55,138,221,0.45), rgba(124,58,237,0.35));
+      border-color: var(--primary-blue);
+      animation: avatarPulse 1.2s ease infinite;
+    }
+
+    /* ── Log out button ── */
     .logout-btn {
       background: transparent;
-      border: 0.5px solid var(--border-color);
+      border: 1px solid var(--border-color);
       color: var(--text-secondary);
       font-size: 12px;
       font-weight: 500;
-      padding: 6px 12px;
-      border-radius: var(--radius-md);
+      padding: 6px 14px;
+      border-radius: 10px;
       cursor: pointer;
-      transition: all 0.15s;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s, color 0.2s, box-shadow 0.2s, transform 0.15s;
+    }
+    .logout-btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(226,75,74,0);
+      transition: background 0.2s;
     }
     .logout-btn:hover {
       border-color: var(--urgent-red);
       color: var(--urgent-red);
+      box-shadow: 0 0 0 3px rgba(226,75,74,0.12);
+      transform: translateY(-1px);
+    }
+    .logout-btn:active {
+      transform: scale(0.96) translateY(0);
+      box-shadow: none;
     }
 
     .modal-overlay {
@@ -1120,15 +1194,12 @@
             </div>
           </div>
         </div>
-        <div class="user-chip">
+        <button class="user-chip" onclick="openProfileModal()" aria-label="Edit profile">
           <div class="user-avatar">👤</div>
           <span id="userNameDisplay">User</span>
-        </div>
+        </button>
         <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle theme">
           <i class="ti ti-moon" id="appThemeIcon"></i>
-        </button>
-        <button class="logout-btn" onclick="openChangePassword()" style="border-color:var(--border-color); color:var(--text-secondary);" aria-label="Change password">
-          <i class="ti ti-key"></i> Password
         </button>
         <button class="logout-btn" onclick="logout()">Log out</button>
       </div>
@@ -1137,17 +1208,6 @@
     <section class="input-section">
       <div class="input-group" style="flex-wrap: wrap;">
         <input id="taskInput" type="text" placeholder="Tell me what to remember... 'Call mom tomorrow at 3pm' or 'Follow up on project in 3 days'" aria-label="Quick task input" />
-        
-        <select id="creationCategorySelect" aria-label="Creation Category selector">
-          <option value="">Auto Category (AI)</option>
-        </select>
-
-        <select id="creationPrioritySelect" aria-label="Creation Priority selector">
-          <option value="">Auto Priority (AI)</option>
-          <option value="high">High Priority</option>
-          <option value="medium">Medium Priority</option>
-          <option value="low">Low Priority</option>
-        </select>
 
         <button id="addBtn" onclick="submitTask()" aria-label="Add parsed reminder">
           <i class="ti ti-plus"></i> Add
@@ -1220,29 +1280,61 @@
   </main>
 </div>
 
-<div id="changePasswordModal" class="modal-overlay hidden" onclick="closeChangePassword(event)">
-  <div class="modal-card">
+<!-- Profile Modal -->
+<div id="profileModal" class="modal-overlay hidden" onclick="closeProfileModal(event)">
+  <div class="modal-card" style="max-width:440px;">
     <div class="modal-header">
-      <span class="modal-title"><i class="ti ti-lock"></i> Change Password</span>
-      <button class="modal-close-btn" onclick="closeChangePassword()" aria-label="Close">&times;</button>
+      <span class="modal-title"><i class="ti ti-user-circle"></i> Profile</span>
+      <button class="modal-close-btn" onclick="closeProfileModal()" aria-label="Close">&times;</button>
     </div>
-    <div class="auth-error" id="cpError"></div>
-    <div class="auth-error" id="cpSuccess" style="color:var(--success-green); background:rgba(99,153,34,0.1); border-color:var(--success-green);"></div>
-    <form class="auth-form" id="cpForm" onsubmit="handleChangePassword(event)" style="gap:12px;">
-      <div class="field">
-        <label class="field-label" for="cpCurrent">Current Password</label>
-        <input class="auth-input" type="password" id="cpCurrent" placeholder="Your current password" required autocomplete="current-password" />
-      </div>
-      <div class="field">
-        <label class="field-label" for="cpNew">New Password</label>
-        <input class="auth-input" type="password" id="cpNew" placeholder="Min 6 characters" required minlength="6" autocomplete="new-password" />
-      </div>
-      <div class="field">
-        <label class="field-label" for="cpConfirm">Confirm New Password</label>
-        <input class="auth-input" type="password" id="cpConfirm" placeholder="Repeat new password" required autocomplete="new-password" />
-      </div>
-      <button class="auth-submit" type="submit" id="cpBtn">Change Password</button>
-    </form>
+
+    <!-- Profile Tabs -->
+    <div style="display:flex; gap:4px; background:var(--surface-2); border:0.5px solid var(--border-color); border-radius:8px; padding:4px;">
+      <button id="profileTabDetails" onclick="switchProfileTab('details')" style="flex:1; padding:8px; border:none; border-radius:6px; font-size:12px; font-weight:500; cursor:pointer; background:linear-gradient(135deg,#1a56db,#7c3aed); color:#fff; transition:all 0.2s;">👤 My Details</button>
+      <button id="profileTabPassword" onclick="switchProfileTab('password')" style="flex:1; padding:8px; border:none; border-radius:6px; font-size:12px; font-weight:500; cursor:pointer; background:transparent; color:var(--text-secondary); transition:all 0.2s;">🔒 Change Password</button>
+    </div>
+
+    <!-- Details Tab -->
+    <div id="profileDetailsPane">
+      <div class="auth-error" id="profileError"></div>
+      <div class="auth-error" id="profileSuccess" style="color:var(--success-green); background:rgba(99,153,34,0.1); border-color:var(--success-green);"></div>
+      <form class="auth-form" id="profileForm" onsubmit="handleUpdateProfile(event)" style="gap:12px;">
+        <div class="field">
+          <label class="field-label" for="profileName">Full Name</label>
+          <input class="auth-input" type="text" id="profileName" placeholder="Your full name" required minlength="1" maxlength="100" autocomplete="name" />
+        </div>
+        <div class="field">
+          <label class="field-label" for="profileEmail">Email Address</label>
+          <input class="auth-input" type="email" id="profileEmail" placeholder="you@example.com" autocomplete="email" />
+        </div>
+        <div class="field">
+          <label class="field-label" for="profileMobile">Mobile Number</label>
+          <input class="auth-input" type="tel" id="profileMobile" placeholder="9876543210" required minlength="7" maxlength="15" autocomplete="tel" />
+        </div>
+        <button class="auth-submit" type="submit" id="profileSaveBtn">Save Changes</button>
+      </form>
+    </div>
+
+    <!-- Change Password Tab -->
+    <div id="profilePasswordPane" style="display:none;">
+      <div class="auth-error" id="cpError"></div>
+      <div class="auth-error" id="cpSuccess" style="color:var(--success-green); background:rgba(99,153,34,0.1); border-color:var(--success-green);"></div>
+      <form class="auth-form" id="cpForm" onsubmit="handleChangePassword(event)" style="gap:12px;">
+        <div class="field">
+          <label class="field-label" for="cpCurrent">Current Password</label>
+          <input class="auth-input" type="password" id="cpCurrent" placeholder="Your current password" required autocomplete="current-password" />
+        </div>
+        <div class="field">
+          <label class="field-label" for="cpNew">New Password</label>
+          <input class="auth-input" type="password" id="cpNew" placeholder="Min 6 characters" required minlength="6" autocomplete="new-password" />
+        </div>
+        <div class="field">
+          <label class="field-label" for="cpConfirm">Confirm New Password</label>
+          <input class="auth-input" type="password" id="cpConfirm" placeholder="Repeat new password" required autocomplete="new-password" />
+        </div>
+        <button class="auth-submit" type="submit" id="cpBtn">Change Password</button>
+      </form>
+    </div>
   </div>
 </div>
 
@@ -1396,16 +1488,84 @@
     document.getElementById('mainApp').classList.remove('visible');
   }
 
-  function openChangePassword() {
-    document.getElementById('cpError').classList.remove('show');
-    document.getElementById('cpSuccess').classList.remove('show');
-    document.getElementById('cpForm').reset();
-    document.getElementById('changePasswordModal').classList.remove('hidden');
+  // ── Profile Modal ──
+  function switchProfileTab(tab) {
+    const isDetails = tab === 'details';
+    document.getElementById('profileDetailsPane').style.display = isDetails ? '' : 'none';
+    document.getElementById('profilePasswordPane').style.display = isDetails ? 'none' : '';
+    const activeStyle = 'background:linear-gradient(135deg,#1a56db,#7c3aed); color:#fff;';
+    const inactiveStyle = 'background:transparent; color:var(--text-secondary);';
+    document.getElementById('profileTabDetails').style.cssText = isDetails ? activeStyle : inactiveStyle;
+    document.getElementById('profileTabPassword').style.cssText = isDetails ? inactiveStyle : activeStyle;
   }
 
-  function closeChangePassword(e) {
-    if (e && e.target !== document.getElementById('changePasswordModal')) return;
-    document.getElementById('changePasswordModal').classList.add('hidden');
+  async function openProfileModal() {
+    // Clear messages
+    ['profileError','profileSuccess','cpError','cpSuccess'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('show');
+    });
+    document.getElementById('cpForm').reset();
+    switchProfileTab('details');
+    document.getElementById('profileModal').classList.remove('hidden');
+    // Load current profile
+    try {
+      const res = await fetch(`${API}/auth/profile`, { headers: authHeaders() });
+      if (res.status === 401) { logout(); return; }
+      if (res.ok) {
+        const data = await res.json();
+        document.getElementById('profileName').value = data.name || '';
+        document.getElementById('profileEmail').value = data.email || '';
+        document.getElementById('profileMobile').value = data.mobile || '';
+      }
+    } catch (_) {}
+  }
+
+  function closeProfileModal(e) {
+    if (e && e.target !== document.getElementById('profileModal')) return;
+    document.getElementById('profileModal').classList.add('hidden');
+  }
+
+  async function handleUpdateProfile(e) {
+    e.preventDefault();
+    const profileError = document.getElementById('profileError');
+    const profileSuccess = document.getElementById('profileSuccess');
+    const btn = document.getElementById('profileSaveBtn');
+    profileError.classList.remove('show');
+    profileSuccess.classList.remove('show');
+
+    const name = document.getElementById('profileName').value.trim();
+    const email = document.getElementById('profileEmail').value.trim();
+    const mobile = document.getElementById('profileMobile').value.trim();
+
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+    try {
+      const res = await fetch(`${API}/auth/profile`, {
+        method: 'PATCH',
+        headers: authHeaders(),
+        body: JSON.stringify({ name: name || null, email: email || null, mobile: mobile || null }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        profileError.textContent = data.detail || 'Failed to update profile.';
+        profileError.classList.add('show');
+        return;
+      }
+      // Update displayed name
+      userName = data.name;
+      localStorage.setItem('sm_user', userName);
+      document.getElementById('userNameDisplay').textContent = userName;
+      profileSuccess.textContent = 'Profile updated successfully!';
+      profileSuccess.classList.add('show');
+      setTimeout(() => { profileSuccess.classList.remove('show'); }, 2500);
+    } catch (_) {
+      profileError.textContent = 'Cannot reach server.';
+      profileError.classList.add('show');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Save Changes';
+    }
   }
 
   async function handleChangePassword(e) {
@@ -1475,22 +1635,11 @@
       if (res.status === 401) { logout(); return; }
       if (res.ok) {
         categories = await res.json();
-        populateCategoryDropdown();
         renderCategoryChips();
       }
     } catch (err) {
       console.error('Error fetching categories:', err);
     }
-  }
-
-  function populateCategoryDropdown() {
-    const select = document.getElementById('creationCategorySelect');
-    if (!select) return;
-    select.innerHTML = '<option value="">Auto Category (AI)</option>' +
-      categories.map(cat => {
-        const capitalized = cat.charAt(0).toUpperCase() + cat.slice(1);
-        return `<option value="${cat}">${capitalized}</option>`;
-      }).join('');
   }
 
   function renderCategoryChips() {
@@ -1622,11 +1771,10 @@
             <div class="reminder-title-row">
               <span class="reminder-title">${escHtml(task.title)}</span>
               <div style="display:flex; gap:6px; align-items:center;">
-                <select class="priority-select" onchange="updatePriority('${taskId}', this.value)" aria-label="Update priority">
-                  <option value="high" ${task.priority === 'high' ? 'selected' : ''}>High</option>
-                  <option value="medium" ${task.priority === 'medium' || !task.priority ? 'selected' : ''}>Medium</option>
-                  <option value="low" ${task.priority === 'low' ? 'selected' : ''}>Low</option>
-                </select>
+                <span class="priority-badge ${urgency}" title="Priority set by AI">
+                  <span class="ai-dot">✦</span>
+                  ${(task.priority || 'medium').charAt(0).toUpperCase() + (task.priority || 'medium').slice(1)}
+                </span>
                 <button class="done-btn" onclick="doneTask('${taskId}')" aria-label="Mark completed">
                   <i class="ti ti-check"></i> Done
                 </button>
@@ -1721,11 +1869,6 @@
     const badge = document.getElementById('aiInsightBadge');
     const badgeText = document.getElementById('aiInsightText');
     const addBtn = document.getElementById('addBtn');
-    
-    const categorySelect = document.getElementById('creationCategorySelect');
-    const prioritySelect = document.getElementById('creationPrioritySelect');
-    const selectedCategory = categorySelect ? categorySelect.value : '';
-    const selectedPriority = prioritySelect ? prioritySelect.value : '';
 
     addBtn.disabled = true;
     addBtn.innerHTML = 'Parsing...';
@@ -1733,11 +1876,7 @@
       const res = await fetch(`${API}/tasks/parse`, {
         method: 'POST',
         headers: authHeaders(),
-        body: JSON.stringify({
-          text,
-          category: selectedCategory || null,
-          priority: selectedPriority || null
-        }),
+        body: JSON.stringify({ text, category: null, priority: null }),
       });
       const data = await res.json();
       if (res.status === 401) { logout(); return; }
@@ -1760,16 +1899,15 @@
       const timeStr = data.scheduled_time ? formatDT(data.scheduled_time) : 'Time flexible';
       const cat = data.category || 'Personal';
       const displayCategory = cat.charAt(0).toUpperCase() + cat.slice(1);
-      badgeText.textContent = `Parsed: ${data.title} | ${timeStr} | Category: ${displayCategory}`;
+      const prio = data.priority || 'medium';
+      const displayPriority = prio.charAt(0).toUpperCase() + prio.slice(1);
+      badgeText.textContent = `✦ AI: ${data.title} | ${timeStr} | ${displayCategory} | ${displayPriority} priority`;
       badge.classList.remove('hidden');
       badge.style.backgroundColor = 'rgba(55, 138, 221, 0.1)';
       badge.style.color = 'var(--primary-blue)';
       badge.style.borderColor = 'rgba(55, 138, 221, 0.2)';
-      
-      input.value = '';
-      if (categorySelect) categorySelect.value = '';
-      if (prioritySelect) prioritySelect.value = '';
 
+      input.value = '';
       badgeTimeout = setTimeout(() => { badge.classList.add('hidden'); }, 3000);
       await refreshData();
     } catch (err) {

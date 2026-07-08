@@ -47,3 +47,50 @@ async def change_password(user_id: str, current_password: str, new_password: str
         {"$set": {"password_hash": new_hash}},
     )
     logger.info("Password changed | user_id=%s", user_id)
+
+
+async def get_profile(user_id: str) -> dict:
+    user = await get_user_by_id(user_id)
+    if not user:
+        raise ValueError("User not found.")
+    return {
+        "name": user.get("name", ""),
+        "mobile": user.get("mobile", ""),
+        "email": user.get("email") or "",
+    }
+
+
+async def update_profile(user_id: str, name: str | None, email: str | None, mobile: str | None) -> dict:
+    from bson import ObjectId
+    from app.db.client import get_users_collection
+
+    user = await get_user_by_id(user_id)
+    if not user:
+        raise ValueError("User not found.")
+
+    update_data: dict = {}
+    if name is not None:
+        update_data["name"] = name.strip()
+    if email is not None:
+        update_data["email"] = email.strip()
+    if mobile is not None:
+        # Ensure no other user has this mobile
+        if mobile != user.get("mobile"):
+            existing = await get_user_by_mobile(mobile)
+            if existing:
+                raise ValueError("This mobile number is already in use.")
+        update_data["mobile"] = mobile.strip()
+
+    if update_data:
+        await get_users_collection().update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": update_data},
+        )
+        logger.info("Profile updated | user_id=%s | fields=%s", user_id, list(update_data.keys()))
+
+    updated_user = await get_user_by_id(user_id)
+    return {
+        "name": updated_user.get("name", ""),
+        "mobile": updated_user.get("mobile", ""),
+        "email": updated_user.get("email") or "",
+    }

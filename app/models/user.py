@@ -11,6 +11,7 @@ class UserDocument(BaseModel):
     id: PyObjectId = Field(alias="_id")
     name: str
     mobile: str
+    email: str | None = None
     password_hash: str
     created_at: datetime
 

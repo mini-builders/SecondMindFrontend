@@ -1,8 +1,9 @@
-from datetime import datetime
 from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.functional_validators import BeforeValidator
+
+from app.core.timezone import ISTDatetime
 
 PyObjectId = Annotated[str, BeforeValidator(str)]
 
@@ -15,15 +16,15 @@ class NotificationDocument(BaseModel):
     task_title: str
     task_type: str
     category: str = "Personal"
-    scheduled_at: datetime | None = None
-    next_fire_at: datetime
+    scheduled_at: ISTDatetime | None = None
+    next_fire_at: ISTDatetime
     fire_count: int = 0
     status: str = "active"  # active | completed | expired
     retry: bool
     retry_interval_minutes: int
     expires: bool
-    expires_at: datetime | None = None
-    created_at: datetime
+    expires_at: ISTDatetime | None = None
+    created_at: ISTDatetime
 
     model_config = ConfigDict(populate_by_name=True, serialize_by_alias=True)
 
@@ -37,9 +38,9 @@ class NotificationEventDocument(BaseModel):
     task_title: str
     task_type: str
     category: str = "Personal"
-    fired_at: datetime
+    fired_at: ISTDatetime
     fire_number: int
     status: str  # pending | task_expired
-    created_at: datetime
+    created_at: ISTDatetime
 
     model_config = ConfigDict(populate_by_name=True, serialize_by_alias=True)

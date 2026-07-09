@@ -36,7 +36,7 @@ async def parse_task(
     final_category = category if category else raw.get("category", "personal")
     final_priority = priority if priority else raw.get("priority", "medium")
     
-    rules = get_rules(final_category)
+    rules = get_rules(final_category, final_priority)
     tasks_collection = get_tasks_collection()
 
     if scheduled_time:

@@ -1706,28 +1706,74 @@
     return 'blue';
   }
 
+  // Which categories have retry enabled (mirrors backend notification_rules.py)
+  const RETRY_ENABLED_CATS = new Set([
+    'travel', 'health', 'learning', 'work', 'financial', 'entertainment', 'social'
+  ]);
+
+  // Priority drives the re-remind interval (mirrors backend PRIORITY_INTERVAL)
+  const PRIORITY_INTERVAL = { high: 10, medium: 15, low: 20 };
+
   function getContext(task) {
+    const parts = [];
+    const now = Date.now();
     const cat = (task.category || 'personal').toLowerCase();
-    if (cat === 'work') {
-      return '🔥 Detected: only 3 hours left + recurring deadline';
-    } else if (cat === 'social') {
-      return '📍 Context: Set recurring weekly';
-    } else if (cat === 'home') {
-      return '📍 Location-based: triggers near supermarket';
-    } else if (cat === 'health') {
-      return '🧘 Context: Vital health routine';
-    } else if (cat === 'shopping') {
-      return '🛒 Shopping list auto-tagged';
-    } else if (cat === 'financial') {
-      return '💰 Payment deadline pending';
-    } else if (cat === 'learning') {
-      return '📚 Study/skill-up block';
-    } else if (cat === 'travel') {
-      return '✈️ Trip reservation schedule';
-    } else if (cat === 'entertainment') {
-      return '🎬 Leisure activity placeholder';
+    const type = (task.task_type || 'personal').toLowerCase();
+    const prio = (task.priority || 'medium').toLowerCase();
+    const retryEnabled = RETRY_ENABLED_CATS.has(cat);
+
+    // ── 1. Time-based context ──────────────────────────────────────────────
+    if (task.scheduled_time) {
+      const scheduledMs = new Date(task.scheduled_time).getTime();
+      const diffMs = scheduledMs - now;
+      const diffMin = Math.round(diffMs / 60000);
+      const diffHrs = diffMs / 3600000;
+
+      if (diffMs < 0) {
+        const agoMin = Math.round(-diffMs / 60000);
+        if (agoMin < 60) {
+          parts.push(`⚠️ Overdue by ${agoMin}m`);
+        } else {
+          parts.push(`⚠️ Overdue by ${Math.round(agoMin / 60)}h`);
+        }
+      } else if (diffMin <= 15) {
+        parts.push(`🔴 Due in ${diffMin}m`);
+      } else if (diffMin <= 60) {
+        parts.push(`🟠 Due in ${diffMin}m`);
+      } else if (diffHrs <= 3) {
+        parts.push(`🟡 Due in ${Math.round(diffHrs)}h`);
+      } else if (diffHrs <= 24) {
+        parts.push(`🕐 Today at scheduled time`);
+      }
+    } else {
+      parts.push(`⏳ Time flexible`);
     }
-    return '📍 Pattern: Auto-scheduled task';
+
+    // ── 2. Task type context ───────────────────────────────────────────────
+    const typeLabels = {
+      communication: '📞 Communication task',
+      live_event:    '🎟️ Live event — fixed window',
+      medicine:      '💊 Medicine / health treatment',
+      meeting:       '🤝 Scheduled meeting',
+      errand:        '🏃 Errand',
+      personal:      '🔖 Personal reminder',
+    };
+    if (typeLabels[type]) {
+      parts.push(typeLabels[type]);
+    }
+
+    // ── 3. Re-remind interval — driven by priority ─────────────────────────
+    if (retryEnabled) {
+      const interval = PRIORITY_INTERVAL[prio] || 15;
+      parts.push(`🔁 Re-reminds every ${interval}m`);
+    }
+
+    // ── 4. Retry count (if already fired before) ──────────────────────────
+    if ((task.retry_count || 0) > 0) {
+      parts.push(`🔔 Reminded ${task.retry_count}× already`);
+    }
+
+    return parts.join(' · ') || '📌 Scheduled';
   }
 
   function renderDashboard() {

@@ -5,7 +5,20 @@ from app.db.client import create_user, get_user_by_id, get_user_by_mobile
 logger = get_logger(__name__)
 
 
+def _normalize_mobile(mobile: str) -> str:
+    """Normalize to E.164: strips spaces/dashes, adds +91 for bare 10-digit Indian numbers."""
+    mobile = mobile.strip().replace(" ", "").replace("-", "")
+    if mobile.startswith("+"):
+        return mobile
+    if len(mobile) == 10:
+        return f"+91{mobile}"
+    if len(mobile) == 12 and mobile.startswith("91"):
+        return f"+{mobile}"
+    return f"+{mobile}"
+
+
 async def signup_user(name: str, mobile: str, password: str) -> dict:
+    mobile = _normalize_mobile(mobile)
     existing = await get_user_by_mobile(mobile)
     if existing:
         raise ValueError("This mobile number is already registered.")
@@ -19,7 +32,7 @@ async def signup_user(name: str, mobile: str, password: str) -> dict:
 
 
 async def login_user(mobile: str, password: str) -> dict:
-    user = await get_user_by_mobile(mobile)
+    user = await get_user_by_mobile(_normalize_mobile(mobile))
     if not user or not verify_password(password, user["password_hash"]):
         raise ValueError("Invalid mobile number or password.")
 
@@ -74,12 +87,12 @@ async def update_profile(user_id: str, name: str | None, email: str | None, mobi
     if email is not None:
         update_data["email"] = email.strip()
     if mobile is not None:
-        # Ensure no other user has this mobile
+        mobile = _normalize_mobile(mobile)
         if mobile != user.get("mobile"):
             existing = await get_user_by_mobile(mobile)
             if existing:
                 raise ValueError("This mobile number is already in use.")
-        update_data["mobile"] = mobile.strip()
+        update_data["mobile"] = mobile
 
     if update_data:
         await get_users_collection().update_one(

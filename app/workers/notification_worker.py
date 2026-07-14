@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
+import httpx
+
 from app.core.logger import get_logger
 from app.db.client import (
     complete_notification_config,
@@ -8,10 +10,9 @@ from app.db.client import (
     expire_task_events,
     get_due_notification_configs,
     get_notifications_to_expire,
-    get_push_subscriptions_for_user,
+    get_user_by_id,
     update_notification_after_fire,
 )
-from app.services.push_service import send_push
 
 logger = get_logger(__name__)
 
@@ -32,15 +33,7 @@ async def run_push_worker() -> None:
         fire_number = config.get("fire_count", 0) + 1
 
         await create_notification_event(config, fire_number, now)
-
-        subs = await get_push_subscriptions_for_user(config["user_id"])
-        for sub in subs:
-            await send_push(
-                sub,
-                title=config["task_title"],
-                body=_push_body(config, fire_number),
-                data={"task_id": config["task_id"], "category": config.get("category", "Personal")},
-            )
+        await _send_whatsapp(config)
 
         if config.get("retry"):
             interval = config.get("retry_interval_minutes", 20) or 20
@@ -63,8 +56,32 @@ async def _expire_overdue(now: datetime) -> None:
         logger.info("Expired | task=%s | total_fires=%d", config["task_id"], config.get("fire_count", 0))
 
 
-def _push_body(config: dict, fire_number: int) -> str:
-    title = config.get("task_title", "Reminder")
-    if fire_number == 1:
-        return f"{title}"
-    return f"Reminder #{fire_number}: {title}"
+async def _send_whatsapp(config: dict) -> None:
+    from app.services.whatsapp_service import send_reminder, send_text
+
+    user = await get_user_by_id(config["user_id"])
+    if not user or not user.get("mobile"):
+        return
+
+    wa_id = user["mobile"].lstrip("+")
+    task_id = config["task_id"]
+    task_title = config["task_title"]
+
+    try:
+        result = await send_reminder(wa_id, task_title, task_id)
+        logger.info("WhatsApp sent | wa_id=%s | task=%s | result=%s", wa_id, task_id, result)
+    except httpx.HTTPStatusError as exc:
+        if exc.response.status_code == 400:
+            # Outside 24h session window — fall back to plain text
+            try:
+                result = await send_text(wa_id, f"🔔 Reminder: {task_title}\n\nReply to this message to use Done/Snooze buttons.")
+                logger.info("WhatsApp fallback text sent | wa_id=%s | task=%s", wa_id, task_id)
+            except Exception as fallback_exc:
+                logger.warning("WhatsApp fallback failed | wa_id=%s | task=%s | error=%s", wa_id, task_id, fallback_exc)
+        else:
+            logger.warning(
+                "WhatsApp failed | wa_id=%s | task=%s | status=%s | body=%s",
+                wa_id, task_id, exc.response.status_code, exc.response.text,
+            )
+    except Exception as exc:
+        logger.warning("WhatsApp error | wa_id=%s | task=%s | error=%s", wa_id, task_id, exc)

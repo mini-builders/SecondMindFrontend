@@ -9,6 +9,7 @@ from starlette.responses import Response
 from starlette.staticfiles import StaticFiles as _StarletteStaticFiles
 
 from app.api.router import api_router
+from app.api.routes.whatsapp import router as whatsapp_router
 from app.core.config import settings
 from app.core.logger import get_logger
 from app.db.client import connect as db_connect, disconnect as db_disconnect
@@ -51,6 +52,7 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(api_router, prefix="/api/v1")
+    app.include_router(whatsapp_router)
 
     @app.get("/health", tags=["Health"])
     async def health_check() -> dict:

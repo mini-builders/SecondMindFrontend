@@ -50,6 +50,13 @@ async def get_user_by_mobile(mobile: str) -> dict | None:
     return await get_users_collection().find_one({"mobile": mobile})
 
 
+async def get_user_by_whatsapp(wa_id: str) -> dict | None:
+    """Look up a user by their WhatsApp number (E.164 without '+', e.g. '919876543210')."""
+    return await get_users_collection().find_one({
+        "$or": [{"mobile": wa_id}, {"mobile": f"+{wa_id}"}],
+    })
+
+
 async def get_user_by_id(user_id: str) -> dict | None:
     return await get_users_collection().find_one({"_id": ObjectId(user_id)})
 
@@ -234,3 +241,11 @@ async def save_push_subscription(user_id: str, subscription: dict) -> None:
 
 async def delete_push_subscription(endpoint: str) -> None:
     await get_push_subscriptions_collection().delete_one({"endpoint": endpoint})
+
+
+async def snooze_notification(task_id: str, user_id: str, minutes: int) -> None:
+    next_fire = datetime.now(timezone.utc) + timedelta(minutes=minutes)
+    await get_notifications_collection().update_one(
+        {"task_id": task_id, "user_id": user_id, "status": "active"},
+        {"$set": {"next_fire_at": next_fire}},
+    )

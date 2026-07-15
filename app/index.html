@@ -1,0 +1,2150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SecondMind — AI Reminders</title>
+  <link rel="manifest" href="/manifest.json" />
+  <script src="/config.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons@latest/iconfont/tabler-icons.min.css">
+  <script>
+    const savedTheme = localStorage.getItem('sm_theme');
+    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const initialTheme = savedTheme || (systemDark ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', initialTheme);
+  </script>
+  <style>
+    :root {
+      --primary-blue: #378ADD;
+      --urgent-red: #E24B4A;
+      --high-amber: #BA7517;
+      --success-green: #639922;
+      --text-primary: #2C2C2A;
+      --text-secondary: #5F5E5A;
+      --text-muted: #888780;
+      --surface-0: #EFEAE2;
+      --surface-1: #F5F5F5;
+      --surface-2: #FFFFFF;
+      --border-color: #D3D1C7;
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    html[data-theme="dark"] {
+      --text-primary: #E5E5E2;
+      --text-secondary: #A6A5A0;
+      --text-muted: #888780;
+      --surface-0: #0B141A;
+      --surface-1: #222D34;
+      --surface-2: #111B21;
+      --border-color: #3B4A54;
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    html[data-theme="dark"] body {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Cg stroke='%23FFFFFF' stroke-width='0.6' fill='none' stroke-opacity='0.08' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20,30 c0,-5.5,4.5,-10,10,-10 h15 c5.5,0,10,4.5,10,10 v10 c0,5.5,-4.5,10,-10,10 h-3 l-6,6 v-6 h-6 c-5.5,0,-10,-4.5,-10,-10 z'/%3E%3Ccircle cx='90' cy='30' r='10'/%3E%3Ccircle cx='87' cy='28' r='1.2'/%3E%3Ccircle cx='93' cy='28' r='1.2'/%3E%3Cpath d='M86 33 q4 3 8 0'/%3E%3Cpath d='M160 30 v20 a4 4 0 1 1-3-3.8 h3 v-12 h15 v8 a4 4 0 1 1-3-3.8 h3 v-12.2 z'/%3E%3Cpath d='M230 40 h18 v16 c0,4 -3,7 -7,7 h-4 c-4,0 -7,-3 -7,-7 z M248 44 c2 0 3.5 1.5 3.5 3.5 c0 2 -1.5 3.5 -3.5 3.5'/%3E%3Cpath d='M20 90 c-2.5-4-7-4-9.5 0 c-2.5 4 1.5 9 9.5 14 c8-5 12-10 9.5-14 c-2.5-4-7-4-9.5 0 z'/%3E%3Cpath d='M80 85 l2 5 l5 2 l-5 2 l-2 5 l-2-5 l-5-2 l5-2 z'/%3E%3Cpath d='M140 90 c-1.5-2.5-5-2.5-6.5 0 c-1.5-1.5-5-1.5-6.5 1 c-1.5 1.5-1.5 5 1.5 6 h10 c2.5 0 2.5-3 1.5-7 z'/%3E%3Cpath d='M200 95 a6 6 0 1 0 -8 0 v14 h4 v-3 h2 v-3 h2 v-8 z M194 95 a2 2 0 1 1 2 -2'/%3E%3Crect x='245' y='95' width='18' height='12' rx='2'/%3E%3Ccircle cx='254' cy='101' r='3'/%3E%3Cpath d='M251 95 l1.5-3 h5 l1.5 3'/%3E%3Cpath d='M35 160 a8 8 0 1 1 14 0 l-2.5 5 h-9 z'/%3E%3Cpath d='M37 170 h10'/%3E%3Cpath d='M95 155 c6 0 10 5 10 10 c0-6-5-10-10-10 z M95 165 v4'/%3E%3Cpath d='M150 160 c2-2 5-2 7 0 l3 3 c2 2 2 5 0 7 c-3 3-8 3-11 0 c-3-3-3-8 0-11 c2-2 5-2 7 0 l1 1'/%3E%3Crect x='200' y='155' width='20' height='13' rx='1'/%3E%3Cpath d='M200 156 l10 7 l10-7'/%3E%3Cpath d='M255 165 l-3-10 l5 4 l4-4 l4 4 l5-4 l-3 10 z'/%3E%3Ccircle cx='35' cy='225' r='6'/%3E%3Ccircle cx='53' cy='225' r='6'/%3E%3Cpath d='M41 225 h6 m-18 0 c-2 0 -3 -2 -3 -4 m26 4 c0-2 1-4 3-4'/%3E%3Ccircle cx='100' cy='225' r='7'/%3E%3Cpath d='M100 213 v4 m0 16 v4 m-10-12 h4 m16 0 h4'/%3E%3Cpath d='M155 220 a12 12 0 0 1 24 0 h-24 z M167 220 v12 a3 3 0 0 0 6 0'/%3E%3Ccircle cx='215' cy='220' r='3'/%3E%3Ccircle cx='215' cy='230' r='3'/%3E%3Cpath d='M218 221 l12 9 m-12 9 l12-9'/%3E%3Cpath d='M260 218 a10 10 0 0 1 12 12 a10 10 0 1 0-12-12 z'/%3E%3Cpath d='M100 135 q5-5 10 0 t10 0'/%3E%3Cpath d='M220 30 q5 5 5 10'/%3E%3Ccircle cx='150' cy='130' r='1.5' fill='%23FFFFFF' fill-opacity='0.08'/%3E%3Ccircle cx='50' cy='110' r='1' fill='%23FFFFFF' fill-opacity='0.08'/%3E%3Ccircle cx='250' cy='130' r='1.2' fill='%23FFFFFF' fill-opacity='0.08'/%3E%3Ccircle cx='110' cy='65' r='1.5' fill='%23FFFFFF' fill-opacity='0.08'/%3E%3Ccircle cx='15' cy='175' r='1' fill='%23FFFFFF' fill-opacity='0.08'/%3E%3Ccircle cx='175' cy='185' r='1.5' fill='%23FFFFFF' fill-opacity='0.08'/%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-weight: inherit;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 1.6;
+      color: var(--text-primary);
+      background-color: var(--surface-0);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Cg stroke='%23378ADD' stroke-width='0.6' fill='none' stroke-opacity='0.16' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20,30 c0,-5.5,4.5,-10,10,-10 h15 c5.5,0,10,4.5,10,10 v10 c0,5.5,-4.5,10,-10,10 h-3 l-6,6 v-6 h-6 c-5.5,0,-10,-4.5,-10,-10 z'/%3E%3Ccircle cx='90' cy='30' r='10'/%3E%3Ccircle cx='87' cy='28' r='1.2'/%3E%3Ccircle cx='93' cy='28' r='1.2'/%3E%3Cpath d='M86 33 q4 3 8 0'/%3E%3Cpath d='M160 30 v20 a4 4 0 1 1-3-3.8 h3 v-12 h15 v8 a4 4 0 1 1-3-3.8 h3 v-12.2 z'/%3E%3Cpath d='M230 40 h18 v16 c0,4 -3,7 -7,7 h-4 c-4,0 -7,-3 -7,-7 z M248 44 c2 0 3.5 1.5 3.5 3.5 c0 2 -1.5 3.5 -3.5 3.5'/%3E%3Cpath d='M20 90 c-2.5-4-7-4-9.5 0 c-2.5 4 1.5 9 9.5 14 c8-5 12-10 9.5-14 c-2.5-4-7-4-9.5 0 z'/%3E%3Cpath d='M80 85 l2 5 l5 2 l-5 2 l-2 5 l-2-5 l-5-2 l5-2 z'/%3E%3Cpath d='M140 90 c-1.5-2.5-5-2.5-6.5 0 c-1.5-1.5-5-1.5-6.5 1 c-1.5 1.5-1.5 5 1.5 6 h10 c2.5 0 2.5-3 1.5-7 z'/%3E%3Cpath d='M200 95 a6 6 0 1 0 -8 0 v14 h4 v-3 h2 v-3 h2 v-8 z M194 95 a2 2 0 1 1 2 -2'/%3E%3Crect x='245' y='95' width='18' height='12' rx='2'/%3E%3Ccircle cx='254' cy='101' r='3'/%3E%3Cpath d='M251 95 l1.5-3 h5 l1.5 3'/%3E%3Cpath d='M35 160 a8 8 0 1 1 14 0 l-2.5 5 h-9 z'/%3E%3Cpath d='M37 170 h10'/%3E%3Cpath d='M95 155 c6 0 10 5 10 10 c0-6-5-10-10-10 z M95 165 v4'/%3E%3Cpath d='M150 160 c2-2 5-2 7 0 l3 3 c2 2 2 5 0 7 c-3 3-8 3-11 0 c-3-3-3-8 0-11 c2-2 5-2 7 0 l1 1'/%3E%3Crect x='200' y='155' width='20' height='13' rx='1'/%3E%3Cpath d='M200 156 l10 7 l10-7'/%3E%3Cpath d='M255 165 l-3-10 l5 4 l4-4 l4 4 l5-4 l-3 10 z'/%3E%3Ccircle cx='35' cy='225' r='6'/%3E%3Ccircle cx='53' cy='225' r='6'/%3E%3Cpath d='M41 225 h6 m-18 0 c-2 0 -3 -2 -3 -4 m26 4 c0-2 1-4 3-4'/%3E%3Ccircle cx='100' cy='225' r='7'/%3E%3Cpath d='M100 213 v4 m0 16 v4 m-10-12 h4 m16 0 h4'/%3E%3Cpath d='M155 220 a12 12 0 0 1 24 0 h-24 z M167 220 v12 a3 3 0 0 0 6 0'/%3E%3Ccircle cx='215' cy='220' r='3'/%3E%3Ccircle cx='215' cy='230' r='3'/%3E%3Cpath d='M218 221 l12 9 m-12 9 l12-9'/%3E%3Cpath d='M260 218 a10 10 0 0 1 12 12 a10 10 0 1 0-12-12 z'/%3E%3Cpath d='M100 135 q5-5 10 0 t10 0'/%3E%3Cpath d='M220 30 q5 5 5 10'/%3E%3Ccircle cx='150' cy='130' r='1.5' fill='%23378ADD' fill-opacity='0.16'/%3E%3Ccircle cx='50' cy='110' r='1' fill='%23378ADD' fill-opacity='0.16'/%3E%3Ccircle cx='250' cy='130' r='1.2' fill='%23378ADD' fill-opacity='0.16'/%3E%3Ccircle cx='110' cy='65' r='1.5' fill='%23378ADD' fill-opacity='0.16'/%3E%3Ccircle cx='15' cy='175' r='1' fill='%23378ADD' fill-opacity='0.16'/%3E%3Ccircle cx='175' cy='185' r='1.5' fill='%23378ADD' fill-opacity='0.16'/%3E%3C/g%3E%3C/svg%3E");
+      background-repeat: repeat;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    h1, h2, h3, h4, h5, h6, button, input, textarea, select, .badge-ai, .badge-prioritized, .stat-number, .chip {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    h2 {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    input:focus, button:focus, .chip:focus {
+      outline: none;
+      border-color: var(--primary-blue);
+      box-shadow: 0 0 0 2px rgba(55, 138, 221, 0.4);
+    }
+
+    .theme-toggle-btn {
+      background: transparent;
+      border: 0.5px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 16px;
+      width: 34px;
+      height: 34px;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: all 0.15s;
+    }
+    .theme-toggle-btn:hover {
+      border-color: var(--primary-blue);
+      color: var(--primary-blue);
+    }
+
+    .priority-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 20px;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+    }
+    .priority-badge.high { background: rgba(226,75,74,0.12); color: var(--urgent-red); }
+    .priority-badge.medium { background: rgba(186,117,23,0.12); color: var(--high-amber); }
+    .priority-badge.low { background: rgba(55,138,221,0.12); color: var(--primary-blue); }
+    .priority-badge .ai-dot { font-size: 8px; opacity: 0.7; }
+
+    .input-group select {
+      height: 44px;
+      border: 0.5px solid var(--border-color);
+      background-color: var(--surface-2);
+      color: var(--text-secondary);
+      padding: 0 12px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      outline: none;
+      transition: all 0.15s;
+    }
+    .input-group select:focus {
+      border-color: var(--primary-blue);
+      box-shadow: 0 0 0 2px rgba(55, 138, 221, 0.4);
+    }
+
+    :root {
+      --auth-bg:          #080c14;
+      --auth-card-bg:     rgba(15, 22, 38, 0.78);
+      --auth-card-border: rgba(255,255,255,0.10);
+      --auth-card-shadow: 0 0 0 0.5px rgba(55,138,221,0.18), 0 24px 64px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06);
+      --auth-logo-color:  #ffffff;
+      --auth-tab-inactive:#94a3b8;
+      --auth-tabs-bg:     rgba(255,255,255,0.05);
+      --auth-tabs-border: rgba(255,255,255,0.08);
+      --auth-label-color: #64748b;
+      --auth-input-bg:    rgba(255,255,255,0.06);
+      --auth-input-border:rgba(255,255,255,0.12);
+      --auth-input-color: #f1f5f9;
+      --auth-placeholder: #475569;
+      --auth-left-color:  #ffffff;
+      --auth-left-tag:    #94a3b8;
+      --auth-feat-color:  #cbd5e1;
+      --auth-feat-icon-bg:rgba(255,255,255,0.06);
+      --auth-feat-border: rgba(255,255,255,0.10);
+      --auth-orb-opacity: 0.35;
+      --auth-grid-color:  rgba(55,138,221,0.04);
+    }
+
+    html[data-theme="light"] {
+      --auth-bg:          #f0f4ff;
+      --auth-card-bg:     rgba(255,255,255,0.92);
+      --auth-card-border: rgba(99,102,241,0.15);
+      --auth-card-shadow: 0 0 0 0.5px rgba(99,102,241,0.12), 0 20px 60px rgba(99,102,241,0.12), inset 0 1px 0 rgba(255,255,255,0.8);
+      --auth-logo-color:  #1e293b;
+      --auth-tab-inactive:#64748b;
+      --auth-tabs-bg:     rgba(99,102,241,0.05);
+      --auth-tabs-border: rgba(99,102,241,0.15);
+      --auth-label-color: #64748b;
+      --auth-input-bg:    rgba(99,102,241,0.04);
+      --auth-input-border:rgba(99,102,241,0.2);
+      --auth-input-color: #1e293b;
+      --auth-placeholder: #94a3b8;
+      --auth-left-color:  #1e293b;
+      --auth-left-tag:    #475569;
+      --auth-feat-color:  #334155;
+      --auth-feat-icon-bg:rgba(99,102,241,0.08);
+      --auth-feat-border: rgba(99,102,241,0.15);
+      --auth-orb-opacity: 0.18;
+      --auth-grid-color:  rgba(99,102,241,0.05);
+    }
+
+    .auth-screen {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+      overflow: hidden;
+      background: var(--auth-bg);
+      transition: background 0.3s;
+    }
+    .auth-screen.hidden { display: none; }
+
+    .auth-bg {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .auth-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: var(--auth-orb-opacity);
+      animation: orbFloat linear infinite;
+    }
+    .auth-orb:nth-child(1) {
+      width: 520px; height: 520px;
+      background: radial-gradient(circle, #1a56db, #0f3460);
+      top: -160px; left: -100px;
+      animation-duration: 18s;
+    }
+    .auth-orb:nth-child(2) {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, #7c3aed, #4f1d96);
+      bottom: -100px; right: -80px;
+      animation-duration: 22s;
+      animation-direction: reverse;
+    }
+    .auth-orb:nth-child(3) {
+      width: 280px; height: 280px;
+      background: radial-gradient(circle, #0ea5e9, #164e63);
+      top: 40%; left: 55%;
+      animation-duration: 15s;
+      opacity: calc(var(--auth-orb-opacity) * 0.6);
+    }
+    @keyframes orbFloat {
+      0%   { transform: translate(0, 0) scale(1); }
+      33%  { transform: translate(30px, -20px) scale(1.06); }
+      66%  { transform: translate(-20px, 30px) scale(0.96); }
+      100% { transform: translate(0, 0) scale(1); }
+    }
+
+    .auth-grid-overlay {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--auth-grid-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--auth-grid-color) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+
+    .auth-wrap {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 48px;
+      width: 100%;
+      max-width: 860px;
+    }
+
+    .auth-left {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      color: var(--auth-left-color);
+    }
+    @media (max-width: 700px) { .auth-left { display: none; } }
+
+    .auth-left-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .auth-left-icon {
+      width: 48px; height: 48px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #1a56db, #7c3aed);
+      display: grid;
+      place-items: center;
+      box-shadow: 0 0 24px rgba(124, 58, 237, 0.5);
+    }
+    .auth-left-brand {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--auth-left-color);
+      letter-spacing: -0.5px;
+    }
+    html[data-theme="dark"] .auth-left-brand {
+      background: linear-gradient(135deg, #fff, #94a3b8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .auth-left-tagline {
+      font-size: 15px;
+      color: var(--auth-left-tag);
+      line-height: 1.6;
+      max-width: 320px;
+    }
+    .auth-features {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .auth-feature-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--auth-feat-color);
+      font-size: 14px;
+    }
+    .auth-feature-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      background: var(--auth-feat-icon-bg);
+      border: 0.5px solid var(--auth-feat-border);
+      display: grid;
+      place-items: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .auth-card {
+      background: var(--auth-card-bg);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 0.5px solid var(--auth-card-border);
+      border-radius: 20px;
+      padding: 36px 32px;
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: var(--auth-card-shadow);
+      flex-shrink: 0;
+      transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+    }
+    .auth-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .auth-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--auth-logo-color);
+    }
+    .auth-logo-icon {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, #1a56db, #7c3aed);
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 0 16px rgba(124,58,237,0.45);
+    }
+    .auth-tabs {
+      display: flex;
+      gap: 4px;
+      background-color: var(--auth-tabs-bg);
+      border: 0.5px solid var(--auth-tabs-border);
+      border-radius: 10px;
+      padding: 4px;
+    }
+    .auth-tab {
+      flex: 1;
+      padding: 9px;
+      border: none;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      background: transparent;
+      color: var(--auth-tab-inactive);
+      transition: all 0.2s;
+    }
+    .auth-tab.active {
+      background: linear-gradient(135deg, #1a56db, #7c3aed);
+      color: #fff;
+      box-shadow: 0 2px 10px rgba(26,86,219,0.4);
+    }
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .auth-form.hidden { display: none; }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .field-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--auth-label-color);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+    .auth-input {
+      background: var(--auth-input-bg);
+      border: 0.5px solid var(--auth-input-border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: var(--auth-input-color);
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .auth-input::placeholder { color: var(--auth-placeholder); }
+    .auth-input:focus {
+      border-color: #1a56db;
+      background: rgba(26,86,219,0.08);
+      box-shadow: 0 0 0 3px rgba(26,86,219,0.15);
+    }
+    .auth-submit {
+      padding: 13px;
+      background: linear-gradient(135deg, #1a56db, #7c3aed);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 16px rgba(26,86,219,0.4);
+      letter-spacing: 0.2px;
+    }
+    .auth-submit:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(26,86,219,0.55);
+    }
+    .auth-submit:active { transform: scale(0.98); }
+    .auth-submit:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .auth-error {
+      font-size: 13px;
+      color: #ef4444;
+      background-color: rgba(239, 68, 68, 0.08);
+      border: 0.5px solid rgba(239,68,68,0.35);
+      border-radius: 8px;
+      padding: 10px 14px;
+      display: none;
+    }
+    .auth-error.show { display: block; }
+
+    .app {
+      display: none;
+      width: 100%;
+      min-height: 100vh;
+    }
+    .app.visible {
+      display: block;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 0.5px solid var(--border-color);
+      padding-bottom: 16px;
+      gap: 20px;
+    }
+    .header-title-section {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .title-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge-ai {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--primary-blue);
+      background-color: rgba(55, 138, 221, 0.1);
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+    }
+    .subtitle {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    /* ── User chip – rounded rectangle ── */
+    @keyframes chipShimmer {
+      0%   { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    @keyframes avatarPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(55,138,221,0.45); }
+      50%       { box-shadow: 0 0 0 5px rgba(55,138,221,0); }
+    }
+    @keyframes chipPress {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(0.95); }
+      100% { transform: scale(1); }
+    }
+    .user-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface-1);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 5px 14px 5px 7px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      color: var(--text-primary);
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.25s, box-shadow 0.25s, color 0.25s, background 0.25s;
+    }
+    /* Shimmer sweep on hover */
+    .user-chip::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        105deg,
+        transparent 35%,
+        rgba(55,138,221,0.18) 50%,
+        transparent 65%
+      );
+      background-size: 200% 100%;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .user-chip:hover::before {
+      opacity: 1;
+      animation: chipShimmer 0.7s ease forwards;
+    }
+    .user-chip:hover {
+      border-color: var(--primary-blue);
+      box-shadow: 0 0 0 3px rgba(55,138,221,0.15), 0 2px 10px rgba(55,138,221,0.12);
+      color: var(--primary-blue);
+      background: rgba(55,138,221,0.05);
+    }
+    .user-chip:active {
+      animation: chipPress 0.18s ease;
+      box-shadow: 0 0 0 2px rgba(55,138,221,0.25);
+    }
+    .user-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 7px;
+      background: linear-gradient(135deg, rgba(55,138,221,0.25), rgba(124,58,237,0.2));
+      border: 1px solid rgba(55,138,221,0.3);
+      display: grid;
+      place-items: center;
+      color: var(--primary-blue);
+      font-size: 12px;
+      transition: all 0.25s;
+      flex-shrink: 0;
+    }
+    .user-chip:hover .user-avatar {
+      background: linear-gradient(135deg, rgba(55,138,221,0.45), rgba(124,58,237,0.35));
+      border-color: var(--primary-blue);
+      animation: avatarPulse 1.2s ease infinite;
+    }
+
+    /* ── Log out button ── */
+    .logout-btn {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s, color 0.2s, box-shadow 0.2s, transform 0.15s;
+    }
+    .logout-btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(226,75,74,0);
+      transition: background 0.2s;
+    }
+    .logout-btn:hover {
+      border-color: var(--urgent-red);
+      color: var(--urgent-red);
+      box-shadow: 0 0 0 3px rgba(226,75,74,0.12);
+      transform: translateY(-1px);
+    }
+    .logout-btn:active {
+      transform: scale(0.96) translateY(0);
+      box-shadow: none;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 500;
+      padding: 20px;
+    }
+    .modal-overlay.hidden {
+      display: none;
+    }
+    .modal-card {
+      background: var(--surface-1);
+      border: 0.5px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 28px 28px 24px;
+      width: 100%;
+      max-width: 380px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: var(--shadow-md);
+      animation: modalIn 0.18s ease;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(-12px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-title {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 20px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 2px 4px;
+      border-radius: var(--radius-sm);
+      transition: color 0.15s;
+    }
+    .modal-close-btn:hover { color: var(--text-primary); }
+
+    .clear-completed-btn {
+      background: transparent;
+      border: 0.5px solid var(--urgent-red);
+      color: var(--urgent-red);
+      font-size: 11px;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s;
+      opacity: 0.75;
+    }
+    .clear-completed-btn:hover {
+      background-color: rgba(226, 75, 74, 0.1);
+      opacity: 1;
+    }
+    .clear-completed-btn.hidden {
+      display: none;
+    }
+
+    .bell-wrapper {
+      position: relative;
+    }
+    .bell-btn {
+      position: relative;
+      background-color: var(--surface-1);
+      border: 0.5px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      transition: border-color 0.15s;
+    }
+    .bell-btn:hover {
+      border-color: var(--primary-blue);
+    }
+    .bell-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background-color: var(--urgent-red);
+      color: var(--surface-2);
+      font-size: 10px;
+      font-weight: 500;
+      min-width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 3px;
+    }
+    .bell-badge.hidden {
+      display: none;
+    }
+    .bell-panel {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 300px;
+      background-color: var(--surface-2);
+      border: 0.5px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      z-index: 100;
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .bell-panel.hidden {
+      display: none;
+    }
+    .bell-panel-header {
+      padding: 12px 16px;
+      border-bottom: 0.5px solid var(--border-color);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .bell-panel-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .bell-notif-list {
+      max-height: 250px;
+      overflow-y: auto;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .empty-notif {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 20px;
+    }
+    .notif-card {
+      background-color: var(--surface-1);
+      border: 0.5px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .notif-top {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .notif-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      flex: 1;
+    }
+    .notif-category {
+      font-size: 10px;
+      color: var(--primary-blue);
+      background-color: rgba(55, 138, 221, 0.1);
+      padding: 1px 6px;
+      border-radius: var(--radius-sm);
+    }
+    .notif-time {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+    .ack-btn {
+      width: 100%;
+      padding: 6px;
+      border: 0.5px solid var(--border-color);
+      background-color: var(--surface-2);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .ack-btn:hover {
+      border-color: var(--success-green);
+      color: var(--success-green);
+    }
+
+    .input-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .input-group {
+      display: flex;
+      gap: 12px;
+    }
+    #taskInput {
+      flex: 1;
+      height: 44px;
+      background-color: var(--surface-2);
+      border: 0.5px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 0 16px;
+      color: var(--text-primary);
+      font-size: 16px;
+      outline: none;
+      transition: all 0.15s;
+    }
+    #addBtn {
+      height: 44px;
+      background-color: var(--primary-blue);
+      color: var(--surface-2);
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 0 20px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: opacity 0.15s;
+    }
+    #addBtn:hover {
+      opacity: 0.9;
+    }
+    .ai-insight-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background-color: rgba(55, 138, 221, 0.1);
+      border: 0.5px solid rgba(55, 138, 221, 0.2);
+      color: var(--primary-blue);
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      opacity: 1;
+      transition: opacity 0.3s ease;
+    }
+    .ai-insight-badge.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .grid-two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    .card {
+      background-color: var(--surface-1);
+      border: 0.5px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .badge-prioritized {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--success-green);
+      background-color: rgba(99, 153, 34, 0.1);
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+    }
+
+    .reminder-list {
+      display: flex;
+      flex-direction: column;
+    }
+    .reminder-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 0.5px solid var(--border-color);
+      position: relative;
+    }
+    .reminder-item:last-child {
+      border-bottom: none;
+    }
+    .reminder-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-top: 6px;
+      flex-shrink: 0;
+    }
+    .reminder-dot.red { background-color: var(--urgent-red); }
+    .reminder-dot.amber { background-color: var(--high-amber); }
+    .reminder-dot.blue { background-color: var(--primary-blue); }
+
+    .reminder-details {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      flex: 1;
+    }
+    .reminder-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .reminder-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+    .reminder-time {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .reminder-context {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+    .done-btn {
+      background: linear-gradient(135deg, #2d7a22, #3ea832);
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 11px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      transition: all 0.15s;
+      box-shadow: 0 2px 6px rgba(46,150,20,0.25);
+      letter-spacing: 0.2px;
+    }
+    .done-btn:hover {
+      background: linear-gradient(135deg, #358c28, #48c03c);
+      box-shadow: 0 3px 10px rgba(46,150,20,0.4);
+      transform: translateY(-1px);
+    }
+    .done-btn:active {
+      transform: scale(0.95);
+    }
+    .done-btn i {
+      font-size: 13px;
+    }
+
+    .suggestions-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .suggestion-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .chip {
+      background-color: var(--surface-2);
+      border: 0.5px solid var(--border-color);
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .chip:hover {
+      border-color: var(--text-secondary);
+      background-color: var(--surface-2);
+    }
+    .suggestions-subtext {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .stat-box {
+      background-color: var(--surface-2);
+      border: 0.5px solid var(--border-color);
+      padding: 12px;
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 4px;
+    }
+    .stat-number {
+      font-size: 24px;
+      font-weight: 500;
+      color: var(--primary-blue);
+    }
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .field-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    @media (max-width: 700px) {
+      .grid-two-col {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+      .app-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+      }
+      .header-actions {
+        justify-content: space-between;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div id="authScreen" class="auth-screen">
+  <div class="auth-bg">
+    <div class="auth-orb"></div>
+    <div class="auth-orb"></div>
+    <div class="auth-orb"></div>
+    <div class="auth-grid-overlay"></div>
+  </div>
+
+  <div class="auth-wrap">
+    <div class="auth-left">
+      <div class="auth-left-logo">
+        <div class="auth-left-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M13 2L4.5 13.5H11L10 22L19.5 10.5H13L13 2Z" fill="white" stroke="rgba(255,255,255,0.3)" stroke-width="0.5" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <span class="auth-left-brand">SecondMind</span>
+      </div>
+      <p class="auth-left-tagline">Your AI-powered reminder brain. Just type what you need — it understands context, time, and urgency automatically.</p>
+      <div class="auth-features">
+        <div class="auth-feature-item">
+          <div class="auth-feature-icon">⚡</div>
+          Natural language — "Call mom tomorrow at 3pm"
+        </div>
+        <div class="auth-feature-item">
+          <div class="auth-feature-icon">🎯</div>
+          AI assigns category, priority & smart timing
+        </div>
+        <div class="auth-feature-item">
+          <div class="auth-feature-icon">🔔</div>
+          Push notifications so you never forget
+        </div>
+        <div class="auth-feature-item">
+          <div class="auth-feature-icon">✨</div>
+          Conflict detection & intelligent scheduling
+        </div>
+      </div>
+    </div>
+
+    <div class="auth-card">
+      <div class="auth-header-row">
+        <div class="auth-logo">
+          <div class="auth-logo-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M13 2L4.5 13.5H11L10 22L19.5 10.5H13L13 2Z" fill="white" stroke="rgba(255,255,255,0.3)" stroke-width="0.5" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <span>SecondMind</span>
+        </div>
+        <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle theme">
+          <i class="ti ti-moon" id="authThemeIcon"></i>
+        </button>
+      </div>
+
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchTab('signup')">Create Account</button>
+        <button class="auth-tab" onclick="switchTab('login')">Log In</button>
+      </div>
+
+      <div class="auth-error" id="authError"></div>
+
+      <form class="auth-form" id="signupForm" onsubmit="handleSignup(event)">
+        <div class="field">
+          <label class="field-label" for="signupName">Full Name</label>
+          <input class="auth-input" type="text" id="signupName" placeholder="Manish Sharma" required />
+        </div>
+        <div class="field">
+          <label class="field-label" for="signupMobile">Mobile Number</label>
+          <input class="auth-input" type="tel" id="signupMobile" placeholder="9876543210" required />
+        </div>
+        <div class="field">
+          <label class="field-label" for="signupPassword">Password</label>
+          <input class="auth-input" type="password" id="signupPassword" placeholder="Min 6 characters" required minlength="6" />
+        </div>
+        <button class="auth-submit" type="submit" id="signupBtn">Create Account</button>
+      </form>
+
+      <form class="auth-form hidden" id="loginForm" onsubmit="handleLogin(event)">
+        <div class="field">
+          <label class="field-label" for="loginMobile">Mobile Number</label>
+          <input class="auth-input" type="tel" id="loginMobile" placeholder="9876543210" required />
+        </div>
+        <div class="field">
+          <label class="field-label" for="loginPassword">Password</label>
+          <input class="auth-input" type="password" id="loginPassword" placeholder="Your password" required />
+        </div>
+        <button class="auth-submit" type="submit" id="loginBtn">Log In</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div id="mainApp" class="app">
+  <main class="container">
+    
+    <header class="app-header">
+      <div class="header-title-section">
+        <div class="title-group">
+          <h1>Reminders</h1>
+          <span class="badge-ai">AI-powered</span>
+        </div>
+        <p class="subtitle">Natural language parsing, context awareness, and intelligent urgency.</p>
+      </div>
+      <div class="header-actions">
+        <div class="bell-wrapper" id="bellWrapper">
+          <button class="bell-btn" onclick="toggleBell()" aria-label="Reminders notifications">
+            🔔
+            <span class="bell-badge hidden" id="bellBadge">0</span>
+          </button>
+          <div class="bell-panel hidden" id="bellPanel">
+            <div class="bell-panel-header">
+              <span>Reminders</span>
+              <span class="bell-panel-sub" id="bellPanelSub"></span>
+            </div>
+            <div class="bell-notif-list" id="bellNotifList">
+              <div class="empty-notif">No pending reminders.</div>
+            </div>
+          </div>
+        </div>
+        <button class="user-chip" onclick="openProfileModal()" aria-label="Edit profile">
+          <div class="user-avatar">👤</div>
+          <span id="userNameDisplay">User</span>
+        </button>
+        <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle theme">
+          <i class="ti ti-moon" id="appThemeIcon"></i>
+        </button>
+        <button class="logout-btn" onclick="logout()">Log out</button>
+      </div>
+    </header>
+
+    <section class="input-section">
+      <div class="input-group" style="flex-wrap: wrap;">
+        <input id="taskInput" type="text" placeholder="Tell me what to remember... 'Call mom tomorrow at 3pm' or 'Follow up on project in 3 days'" aria-label="Quick task input" />
+
+        <button id="addBtn" onclick="submitTask()" aria-label="Add parsed reminder">
+          <i class="ti ti-plus"></i> Add
+        </button>
+      </div>
+      <div class="ai-insight-badge hidden" id="aiInsightBadge">
+        <i class="ti ti-sparkles"></i>
+        <span id="aiInsightText">Parsed: [Task] | [Time] | [Context]</span>
+      </div>
+    </section>
+
+    <section style="margin-bottom: 24px;">
+      <div class="card" id="upNextCard">
+        <div class="card-header">
+          <h2>Up next</h2>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <button id="clearCompletedBtn" class="clear-completed-btn hidden" onclick="clearCompletedTasks()" aria-label="Clear all completed tasks">
+              <i class="ti ti-trash"></i> Clear completed (<span id="completedCount">0</span>)
+            </button>
+            <span class="badge-prioritized">prioritized by AI</span>
+          </div>
+        </div>
+        <div class="reminder-list" id="reminderList">
+        </div>
+      </div>
+    </section>
+
+    <section class="grid-two-col">
+      <div class="card" id="suggestionsCard">
+        <h2>Quick suggestions & Custom categories</h2>
+        <div class="suggestions-container" style="display:flex; flex-direction:column; gap:16px;">
+          <div>
+            <span class="field-label" style="margin-bottom:8px; display:block;">Quick Suggestions</span>
+            <div class="suggestion-chips">
+              <button class="chip" onclick="useSuggestion('Follow up on emails')">Follow up on emails</button>
+              <button class="chip" onclick="useSuggestion('Drink water reminder')">Drink water reminder</button>
+              <button class="chip" onclick="useSuggestion('Team standup')">Team standup</button>
+              <button class="chip" onclick="useSuggestion('Weekly sync scheduled')">Weekly sync scheduled</button>
+              <button class="chip" onclick="useSuggestion('Check calendar')">Check calendar</button>
+              <button class="chip" onclick="useSuggestion('Email response')">Email response</button>
+            </div>
+          </div>
+          <div style="border-top:0.5px solid var(--border-color); padding-top:16px;">
+            <span class="field-label" style="margin-bottom:8px; display:block;">Your Categories</span>
+            <div class="suggestion-chips" id="categoriesChips" style="margin-bottom:12px;">
+            </div>
+            <div class="input-group" style="gap:8px;">
+              <input id="newCategoryInput" type="text" placeholder="New category name..." style="height:32px; font-size:12px; flex:1; border:0.5px solid var(--border-color); border-radius:var(--radius-sm); padding:0 8px; background:var(--surface-2); color:var(--text-primary); outline:none;" />
+              <button onclick="addCustomCategory()" style="height:32px; background:var(--primary-blue); color:var(--surface-2); border:none; padding:0 12px; border-radius:var(--radius-sm); font-size:12px; cursor:pointer;">Add</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="statsCard">
+        <h2>Today's stats</h2>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <span class="stat-number" id="statRemindersCount">0</span>
+            <span class="stat-label">Reminders today</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-number" id="statOnTimeRate">0%</span>
+            <span class="stat-label">On-time rate</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Profile Modal -->
+<div id="profileModal" class="modal-overlay hidden" onclick="closeProfileModal(event)">
+  <div class="modal-card" style="max-width:440px;">
+    <div class="modal-header">
+      <span class="modal-title"><i class="ti ti-user-circle"></i> Profile</span>
+      <button class="modal-close-btn" onclick="closeProfileModal()" aria-label="Close">&times;</button>
+    </div>
+
+    <!-- Profile Tabs -->
+    <div style="display:flex; gap:4px; background:var(--surface-2); border:0.5px solid var(--border-color); border-radius:8px; padding:4px;">
+      <button id="profileTabDetails" onclick="switchProfileTab('details')" style="flex:1; padding:8px; border:none; border-radius:6px; font-size:12px; font-weight:500; cursor:pointer; background:linear-gradient(135deg,#1a56db,#7c3aed); color:#fff; transition:all 0.2s;">👤 My Details</button>
+      <button id="profileTabPassword" onclick="switchProfileTab('password')" style="flex:1; padding:8px; border:none; border-radius:6px; font-size:12px; font-weight:500; cursor:pointer; background:transparent; color:var(--text-secondary); transition:all 0.2s;">🔒 Change Password</button>
+    </div>
+
+    <!-- Details Tab -->
+    <div id="profileDetailsPane">
+      <div class="auth-error" id="profileError"></div>
+      <div class="auth-error" id="profileSuccess" style="color:var(--success-green); background:rgba(99,153,34,0.1); border-color:var(--success-green);"></div>
+      <form class="auth-form" id="profileForm" onsubmit="handleUpdateProfile(event)" style="gap:12px;">
+        <div class="field">
+          <label class="field-label" for="profileName">Full Name</label>
+          <input class="auth-input" type="text" id="profileName" placeholder="Your full name" required minlength="1" maxlength="100" autocomplete="name" />
+        </div>
+        <div class="field">
+          <label class="field-label" for="profileEmail">Email Address</label>
+          <input class="auth-input" type="email" id="profileEmail" placeholder="you@example.com" autocomplete="email" />
+        </div>
+        <div class="field">
+          <label class="field-label" for="profileMobile">Mobile Number</label>
+          <input class="auth-input" type="tel" id="profileMobile" placeholder="9876543210" required minlength="7" maxlength="15" autocomplete="tel" />
+        </div>
+        <button class="auth-submit" type="submit" id="profileSaveBtn">Save Changes</button>
+      </form>
+    </div>
+
+    <!-- Change Password Tab -->
+    <div id="profilePasswordPane" style="display:none;">
+      <div class="auth-error" id="cpError"></div>
+      <div class="auth-error" id="cpSuccess" style="color:var(--success-green); background:rgba(99,153,34,0.1); border-color:var(--success-green);"></div>
+      <form class="auth-form" id="cpForm" onsubmit="handleChangePassword(event)" style="gap:12px;">
+        <div class="field">
+          <label class="field-label" for="cpCurrent">Current Password</label>
+          <input class="auth-input" type="password" id="cpCurrent" placeholder="Your current password" required autocomplete="current-password" />
+        </div>
+        <div class="field">
+          <label class="field-label" for="cpNew">New Password</label>
+          <input class="auth-input" type="password" id="cpNew" placeholder="Min 6 characters" required minlength="6" autocomplete="new-password" />
+        </div>
+        <div class="field">
+          <label class="field-label" for="cpConfirm">Confirm New Password</label>
+          <input class="auth-input" type="password" id="cpConfirm" placeholder="Repeat new password" required autocomplete="new-password" />
+        </div>
+        <button class="auth-submit" type="submit" id="cpBtn">Change Password</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API = (window.BACKEND_URL || '') + '/api/v1';
+
+  let token = localStorage.getItem('sm_token');
+  let userName = localStorage.getItem('sm_user');
+  let tasks = [];
+  let notifications = [];
+  let categories = [];
+  let bellOpen = false;
+  let _swReg = null;
+  let badgeTimeout = null;
+
+  function authHeaders() {
+    return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
+  }
+
+  function escHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function formatDT(iso) {
+    const d = new Date(iso);
+    const today = new Date();
+    const tomorrow = new Date(Date.now() + 86400000);
+    const isToday = d.toDateString() === today.toDateString();
+    const isTomorrow = d.toDateString() === tomorrow.toDateString();
+    const timeStr = d.toLocaleTimeString('en-US', {
+      timeZone: 'Asia/Kolkata',
+      hour: 'numeric', minute: '2-digit', hour12: true
+    });
+    if (isToday) {
+      return `Today at ${timeStr}`;
+    } else if (isTomorrow) {
+      return `Tomorrow at ${timeStr}`;
+    } else {
+      return d.toLocaleDateString('en-US', {
+        timeZone: 'Asia/Kolkata',
+        day: 'numeric', month: 'short'
+      }) + ` at ${timeStr}`;
+    }
+  }
+
+  function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme') || 'light';
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('sm_theme', next);
+    updateThemeIcons(next);
+  }
+
+  updateThemeIcons(document.documentElement.getAttribute('data-theme') || 'light');
+
+  function updateThemeIcons(theme) {
+    const authIcon = document.getElementById('authThemeIcon');
+    const appIcon = document.getElementById('appThemeIcon');
+    const iconClass = theme === 'dark' ? 'ti ti-sun' : 'ti ti-moon';
+    if (authIcon) authIcon.className = iconClass;
+    if (appIcon) appIcon.className = iconClass;
+  }
+
+  if (token) {
+    showMainApp();
+  } else {
+    document.getElementById('authScreen').classList.remove('hidden');
+  }
+
+  function switchTab(tab) {
+    document.querySelectorAll('.auth-tab').forEach((t, i) => t.classList.toggle('active', (i === 0) === (tab === 'signup')));
+    document.getElementById('signupForm').classList.toggle('hidden', tab !== 'signup');
+    document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
+    clearAuthError();
+  }
+
+  function showAuthError(msg) {
+    const el = document.getElementById('authError');
+    el.textContent = msg;
+    el.classList.add('show');
+  }
+  function clearAuthError() {
+    document.getElementById('authError').classList.remove('show');
+  }
+
+  async function handleSignup(e) {
+    e.preventDefault();
+    clearAuthError();
+    const btn = document.getElementById('signupBtn');
+    btn.disabled = true; btn.textContent = 'Creating account...';
+    try {
+      const res = await fetch(`${API}/auth/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: document.getElementById('signupName').value.trim(),
+          mobile: document.getElementById('signupMobile').value.trim(),
+          password: document.getElementById('signupPassword').value,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) { showAuthError(data.detail || 'Signup failed.'); return; }
+      saveSession(data);
+    } catch (_) {
+      showAuthError('Cannot reach server.');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Create Account';
+    }
+  }
+
+  async function handleLogin(e) {
+    e.preventDefault();
+    clearAuthError();
+    const btn = document.getElementById('loginBtn');
+    btn.disabled = true; btn.textContent = 'Logging in...';
+    try {
+      const res = await fetch(`${API}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mobile: document.getElementById('loginMobile').value.trim(),
+          password: document.getElementById('loginPassword').value,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) { showAuthError(data.detail || 'Login failed.'); return; }
+      saveSession(data);
+    } catch (_) {
+      showAuthError('Cannot reach server.');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Log In';
+    }
+  }
+
+  function saveSession(data) {
+    token = data.access_token;
+    userName = data.user_name;
+    localStorage.setItem('sm_token', token);
+    localStorage.setItem('sm_user', userName);
+    showMainApp();
+  }
+
+  function logout() {
+    localStorage.removeItem('sm_token');
+    localStorage.removeItem('sm_user');
+    token = null; userName = null;
+    tasks = [];
+    categories = [];
+    document.getElementById('authScreen').classList.remove('hidden');
+    document.getElementById('mainApp').classList.remove('visible');
+  }
+
+  // ── Profile Modal ──
+  function switchProfileTab(tab) {
+    const isDetails = tab === 'details';
+    document.getElementById('profileDetailsPane').style.display = isDetails ? '' : 'none';
+    document.getElementById('profilePasswordPane').style.display = isDetails ? 'none' : '';
+    const activeStyle = 'background:linear-gradient(135deg,#1a56db,#7c3aed); color:#fff;';
+    const inactiveStyle = 'background:transparent; color:var(--text-secondary);';
+    document.getElementById('profileTabDetails').style.cssText = isDetails ? activeStyle : inactiveStyle;
+    document.getElementById('profileTabPassword').style.cssText = isDetails ? inactiveStyle : activeStyle;
+  }
+
+  async function openProfileModal() {
+    // Clear messages
+    ['profileError','profileSuccess','cpError','cpSuccess'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('show');
+    });
+    document.getElementById('cpForm').reset();
+    switchProfileTab('details');
+    document.getElementById('profileModal').classList.remove('hidden');
+    // Load current profile
+    try {
+      const res = await fetch(`${API}/auth/profile`, { headers: authHeaders() });
+      if (res.status === 401) { logout(); return; }
+      if (res.ok) {
+        const data = await res.json();
+        document.getElementById('profileName').value = data.name || '';
+        document.getElementById('profileEmail').value = data.email || '';
+        document.getElementById('profileMobile').value = data.mobile || '';
+      }
+    } catch (_) {}
+  }
+
+  function closeProfileModal(e) {
+    if (e && e.target !== document.getElementById('profileModal')) return;
+    document.getElementById('profileModal').classList.add('hidden');
+  }
+
+  async function handleUpdateProfile(e) {
+    e.preventDefault();
+    const profileError = document.getElementById('profileError');
+    const profileSuccess = document.getElementById('profileSuccess');
+    const btn = document.getElementById('profileSaveBtn');
+    profileError.classList.remove('show');
+    profileSuccess.classList.remove('show');
+
+    const name = document.getElementById('profileName').value.trim();
+    const email = document.getElementById('profileEmail').value.trim();
+    const mobile = document.getElementById('profileMobile').value.trim();
+
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+    try {
+      const res = await fetch(`${API}/auth/profile`, {
+        method: 'PATCH',
+        headers: authHeaders(),
+        body: JSON.stringify({ name: name || null, email: email || null, mobile: mobile || null }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        profileError.textContent = data.detail || 'Failed to update profile.';
+        profileError.classList.add('show');
+        return;
+      }
+      // Update displayed name
+      userName = data.name;
+      localStorage.setItem('sm_user', userName);
+      document.getElementById('userNameDisplay').textContent = userName;
+      profileSuccess.textContent = 'Profile updated successfully!';
+      profileSuccess.classList.add('show');
+      setTimeout(() => { profileSuccess.classList.remove('show'); }, 2500);
+    } catch (_) {
+      profileError.textContent = 'Cannot reach server.';
+      profileError.classList.add('show');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Save Changes';
+    }
+  }
+
+  async function handleChangePassword(e) {
+    e.preventDefault();
+    const cpError = document.getElementById('cpError');
+    const cpSuccess = document.getElementById('cpSuccess');
+    const btn = document.getElementById('cpBtn');
+    cpError.classList.remove('show');
+    cpSuccess.classList.remove('show');
+
+    const current = document.getElementById('cpCurrent').value;
+    const newPwd = document.getElementById('cpNew').value;
+    const confirm = document.getElementById('cpConfirm').value;
+
+    if (newPwd !== confirm) {
+      cpError.textContent = 'New passwords do not match.';
+      cpError.classList.add('show');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Updating...';
+    try {
+      const res = await fetch(`${API}/auth/password`, {
+        method: 'PATCH',
+        headers: authHeaders(),
+        body: JSON.stringify({ current_password: current, new_password: newPwd }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        cpError.textContent = data.detail || 'Failed to change password.';
+        cpError.classList.add('show');
+        return;
+      }
+      cpSuccess.textContent = 'Password changed! Please log in again.';
+      cpSuccess.classList.add('show');
+      setTimeout(() => { logout(); }, 1500);
+    } catch (_) {
+      cpError.textContent = 'Cannot reach server.';
+      cpError.classList.add('show');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Change Password';
+    }
+  }
+
+  function showMainApp() {
+    document.getElementById('authScreen').classList.add('hidden');
+    document.getElementById('mainApp').classList.add('visible');
+    document.getElementById('userNameDisplay').textContent = userName || 'User';
+    document.getElementById('taskInput').value = '';
+    const badge = document.getElementById('aiInsightBadge');
+    badge.classList.add('hidden');
+
+    Promise.all([fetchCategories(), refreshData()]).catch(err => {
+      console.error('Boot error:', err);
+    });
+
+    setupPush();
+    handleUrlParams();
+  }
+
+  async function fetchCategories() {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API}/tasks/categories`, { headers: authHeaders() });
+      if (res.status === 401) { logout(); return; }
+      if (res.ok) {
+        categories = await res.json();
+        renderCategoryChips();
+      }
+    } catch (err) {
+      console.error('Error fetching categories:', err);
+    }
+  }
+
+  function renderCategoryChips() {
+    const container = document.getElementById('categoriesChips');
+    if (!container) return;
+    container.innerHTML = categories.map(cat => {
+      const capitalized = cat.charAt(0).toUpperCase() + cat.slice(1);
+      return `<span class="chip" style="cursor:default;">${capitalized}</span>`;
+    }).join('');
+  }
+
+  async function addCustomCategory() {
+    const input = document.getElementById('newCategoryInput');
+    const name = input.value.trim();
+    if (!name) return;
+    try {
+      const res = await fetch(`${API}/tasks/categories`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ name })
+      });
+      if (res.status === 401) { logout(); return; }
+      if (res.ok) {
+        input.value = '';
+        await fetchCategories();
+      } else {
+        const err = await res.json();
+        alert(err.detail || 'Failed to add category');
+      }
+    } catch (err) {
+      console.error('Error adding category:', err);
+    }
+  }
+
+  async function refreshData() {
+    await fetchTasks();
+    await updateCount();
+    if (bellOpen) {
+      await openBell();
+    }
+    renderDashboard();
+  }
+
+  async function fetchTasks() {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API}/tasks`, { headers: authHeaders() });
+      if (res.status === 401) { logout(); return; }
+      if (res.ok) {
+        tasks = await res.json();
+      }
+    } catch (err) {
+      console.error('Error fetching tasks:', err);
+    }
+  }
+
+  function getUrgency(task) {
+    const prio = task.priority || 'medium';
+    if (prio === 'high') {
+      return 'red';
+    } else if (prio === 'medium') {
+      return 'amber';
+    }
+    return 'blue';
+  }
+
+  // Which categories have retry enabled (mirrors backend notification_rules.py)
+  const RETRY_ENABLED_CATS = new Set([
+    'travel', 'health', 'learning', 'work', 'financial', 'entertainment', 'social'
+  ]);
+
+  // Priority drives the re-remind interval (mirrors backend PRIORITY_INTERVAL)
+  const PRIORITY_INTERVAL = { high: 10, medium: 15, low: 20 };
+
+  function getContext(task) {
+    const parts = [];
+    const now = Date.now();
+    const cat = (task.category || 'personal').toLowerCase();
+    const type = (task.task_type || 'personal').toLowerCase();
+    const prio = (task.priority || 'medium').toLowerCase();
+    const retryEnabled = RETRY_ENABLED_CATS.has(cat);
+
+    // ── 1. Time-based context ──────────────────────────────────────────────
+    if (task.scheduled_time) {
+      const scheduledMs = new Date(task.scheduled_time).getTime();
+      const diffMs = scheduledMs - now;
+      const diffMin = Math.round(diffMs / 60000);
+      const diffHrs = diffMs / 3600000;
+
+      if (diffMs < 0) {
+        const agoMin = Math.round(-diffMs / 60000);
+        if (agoMin < 60) {
+          parts.push(`⚠️ Overdue by ${agoMin}m`);
+        } else {
+          parts.push(`⚠️ Overdue by ${Math.round(agoMin / 60)}h`);
+        }
+      } else if (diffMin <= 15) {
+        parts.push(`🔴 Due in ${diffMin}m`);
+      } else if (diffMin <= 60) {
+        parts.push(`🟠 Due in ${diffMin}m`);
+      } else if (diffHrs <= 3) {
+        parts.push(`🟡 Due in ${Math.round(diffHrs)}h`);
+      } else if (diffHrs <= 24) {
+        parts.push(`🕐 Today at scheduled time`);
+      }
+    } else {
+      parts.push(`⏳ Time flexible`);
+    }
+
+    // ── 2. Task type context ───────────────────────────────────────────────
+    const typeLabels = {
+      communication: '📞 Communication task',
+      live_event:    '🎟️ Live event — fixed window',
+      medicine:      '💊 Medicine / health treatment',
+      meeting:       '🤝 Scheduled meeting',
+      errand:        '🏃 Errand',
+      personal:      '🔖 Personal reminder',
+    };
+    if (typeLabels[type]) {
+      parts.push(typeLabels[type]);
+    }
+
+    // ── 3. Re-remind interval — driven by priority ─────────────────────────
+    if (retryEnabled) {
+      const interval = PRIORITY_INTERVAL[prio] || 15;
+      parts.push(`🔁 Re-reminds every ${interval}m`);
+    }
+
+    // ── 4. Retry count (if already fired before) ──────────────────────────
+    if ((task.retry_count || 0) > 0) {
+      parts.push(`🔔 Reminded ${task.retry_count}× already`);
+    }
+
+    return parts.join(' · ') || '📌 Scheduled';
+  }
+
+  function renderDashboard() {
+    renderUpNext();
+    renderStats();
+  }
+
+  function renderUpNext() {
+    const listContainer = document.getElementById('reminderList');
+
+    const activeTasks = tasks.filter(t => t.status === 'scheduled');
+
+    if (activeTasks.length === 0) {
+      listContainer.innerHTML = `
+        <div class="empty-notif" style="padding:24px; text-align:center;">
+          <div style="font-size:28px; margin-bottom:8px;">✅</div>
+          <div style="font-weight:500; color:var(--text-primary); margin-bottom:4px;">All clear!</div>
+          <div style="font-size:12px; color:var(--text-muted);">Add a reminder above to get started.</div>
+        </div>`;
+      return;
+    }
+
+    const priorityWeight = { red: 3, amber: 2, blue: 1 };
+    const sorted = [...activeTasks].sort((a, b) => {
+      const weightA = priorityWeight[getUrgency(a)] || 0;
+      const weightB = priorityWeight[getUrgency(b)] || 0;
+      if (weightA !== weightB) return weightB - weightA;
+      return new Date(a.scheduled_time || 0) - new Date(b.scheduled_time || 0);
+    });
+
+    const displayList = sorted.slice(0, 8);
+    listContainer.innerHTML = displayList.map(task => {
+      const urgency = getUrgency(task);
+      const context = getContext(task);
+      const displayCategory = task.category ? (task.category.charAt(0).toUpperCase() + task.category.slice(1)) : 'Personal';
+      const taskId = task['_id'] || task.id;
+      return `
+        <div class="reminder-item" data-task-id="${taskId}">
+          <span class="reminder-dot ${urgency}"></span>
+          <div class="reminder-details">
+            <div class="reminder-title-row">
+              <span class="reminder-title">${escHtml(task.title)}</span>
+              <div style="display:flex; gap:6px; align-items:center;">
+                <span class="priority-badge ${urgency}" title="Priority set by AI">
+                  <span class="ai-dot">✦</span>
+                  ${(task.priority || 'medium').charAt(0).toUpperCase() + (task.priority || 'medium').slice(1)}
+                </span>
+                <button class="done-btn" onclick="doneTask('${taskId}')" aria-label="Mark completed">
+                  <i class="ti ti-check"></i> Done
+                </button>
+              </div>
+            </div>
+            <span class="reminder-time">${task.scheduled_time ? formatDT(task.scheduled_time) : 'Time flexible'}</span>
+            <span class="reminder-context">Category: ${displayCategory} | ${context}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderStats() {
+    const countEl = document.getElementById('statRemindersCount');
+    const rateEl = document.getElementById('statOnTimeRate');
+    const today = new Date().toDateString();
+    const todayTasks = tasks.filter(t => t.scheduled_time && new Date(t.scheduled_time).toDateString() === today);
+    const countToday = todayTasks.length;
+    const completed = tasks.filter(t => t.status === 'completed' || t.status === 'done');
+    let rate = 0;
+    if (tasks.length > 0) {
+      rate = Math.round((completed.length / tasks.length) * 100);
+    }
+    countEl.textContent = countToday;
+    rateEl.textContent = `${rate}%`;
+
+    const clearBtn = document.getElementById('clearCompletedBtn');
+    const completedCountEl = document.getElementById('completedCount');
+    if (clearBtn && completedCountEl) {
+      if (completed.length > 0) {
+        completedCountEl.textContent = completed.length;
+        clearBtn.classList.remove('hidden');
+      } else {
+        clearBtn.classList.add('hidden');
+      }
+    }
+  }
+
+  async function clearCompletedTasks() {
+    const btn = document.getElementById('clearCompletedBtn');
+    if (!btn) return;
+    const count = parseInt(document.getElementById('completedCount').textContent, 10);
+    if (!confirm(`Delete ${count} completed reminder${count !== 1 ? 's' : ''}? This cannot be undone.`)) return;
+
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+    try {
+      const res = await fetch(`${API}/tasks/completed`, {
+        method: 'DELETE',
+        headers: authHeaders(),
+      });
+      if (res.status === 401) { logout(); return; }
+      if (res.ok) {
+        await refreshData();
+      }
+    } catch (err) {
+      console.error('Error clearing completed tasks:', err);
+    } finally {
+      btn.disabled = false;
+      btn.style.opacity = '';
+    }
+  }
+
+  async function useSuggestion(text) {
+    const input = document.getElementById('taskInput');
+    input.value = text;
+    input.focus();
+    await submitTask();
+  }
+
+  document.getElementById('taskInput').addEventListener('input', () => {
+    const badge = document.getElementById('aiInsightBadge');
+    badge.classList.add('hidden');
+    if (badgeTimeout) {
+      clearTimeout(badgeTimeout);
+    }
+  });
+
+  document.getElementById('taskInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      submitTask();
+    }
+  });
+
+  async function submitTask() {
+    const input = document.getElementById('taskInput');
+    const text = input.value.trim();
+    if (!text) return;
+    if (badgeTimeout) clearTimeout(badgeTimeout);
+    const badge = document.getElementById('aiInsightBadge');
+    const badgeText = document.getElementById('aiInsightText');
+    const addBtn = document.getElementById('addBtn');
+
+    addBtn.disabled = true;
+    addBtn.innerHTML = 'Parsing...';
+    try {
+      const res = await fetch(`${API}/tasks/parse`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ text, category: null, priority: null }),
+      });
+      const data = await res.json();
+      if (res.status === 401) { logout(); return; }
+      if (res.status === 409) {
+        badgeText.textContent = `Conflict: "${data.detail.conflicting_task_title}" is already scheduled around this time.`;
+        badge.classList.remove('hidden');
+        badge.style.backgroundColor = 'rgba(226, 75, 74, 0.1)';
+        badge.style.color = 'var(--urgent-red)';
+        badge.style.borderColor = 'rgba(226, 75, 74, 0.2)';
+        badgeTimeout = setTimeout(() => { badge.classList.add('hidden'); }, 5000);
+        return;
+      }
+      if (!res.ok) {
+        badgeText.textContent = `Error: ${data.detail || 'Failed to parse task.'}`;
+        badge.classList.remove('hidden');
+        badge.style.backgroundColor = 'rgba(226, 75, 74, 0.1)';
+        badge.style.color = 'var(--urgent-red)';
+        return;
+      }
+      const timeStr = data.scheduled_time ? formatDT(data.scheduled_time) : 'Time flexible';
+      const cat = data.category || 'Personal';
+      const displayCategory = cat.charAt(0).toUpperCase() + cat.slice(1);
+      const prio = data.priority || 'medium';
+      const displayPriority = prio.charAt(0).toUpperCase() + prio.slice(1);
+      badgeText.textContent = `✦ AI: ${data.title} | ${timeStr} | ${displayCategory} | ${displayPriority} priority`;
+      badge.classList.remove('hidden');
+      badge.style.backgroundColor = 'rgba(55, 138, 221, 0.1)';
+      badge.style.color = 'var(--primary-blue)';
+      badge.style.borderColor = 'rgba(55, 138, 221, 0.2)';
+
+      input.value = '';
+      badgeTimeout = setTimeout(() => { badge.classList.add('hidden'); }, 3000);
+      await refreshData();
+    } catch (err) {
+      console.error(err);
+      badgeText.textContent = 'Error: Cannot reach server.';
+      badge.classList.remove('hidden');
+      badge.style.backgroundColor = 'rgba(226, 75, 74, 0.1)';
+      badge.style.color = 'var(--urgent-red)';
+    } finally {
+      addBtn.disabled = false;
+      addBtn.innerHTML = '<i class="ti ti-plus"></i> Add';
+    }
+  }
+
+  async function toggleBell() {
+    bellOpen = !bellOpen;
+    const panel = document.getElementById('bellPanel');
+    panel.classList.toggle('hidden', !bellOpen);
+    if (bellOpen) await openBell();
+  }
+
+  async function openBell() {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API}/notifications`, { headers: authHeaders() });
+      if (res.status === 401) { logout(); return; }
+      const list = await res.json();
+      renderBellNotifs(list);
+      setBadge(list.length);
+    } catch (_) {}
+  }
+
+  function renderBellNotifs(list) {
+    const container = document.getElementById('bellNotifList');
+    const sub = document.getElementById('bellPanelSub');
+    if (!list.length) {
+      container.innerHTML = '<div class="empty-notif">All clear! No pending reminders.</div>';
+      sub.textContent = '';
+      return;
+    }
+    sub.textContent = `${list.length} pending`;
+    const CAT_ICONS = {
+      travel: '✈️', health: '💊', learning: '📚', work: '💼',
+      financial: '💰', entertainment: '🎬', social: '👥', home: '🏠',
+      shopping: '🛒', personal: '🧘',
+      Travel: '✈️', Health: '💊', Study: '📚', Work: '💼',
+      Finance: '💰', Entertainment: '🎬', Social: '👥', Home: '🏠', Personal: '🧘',
+    };
+    container.innerHTML = list.map(n => {
+      const category = n.category || 'personal';
+      const displayCategory = category.charAt(0).toUpperCase() + category.slice(1);
+      const catIcon = CAT_ICONS[category] || '🔔';
+      const fireLabel = ordinal(n.fire_number || 1) + ' reminder';
+      const expired = n.status === 'task_expired';
+      return `
+        <div class="notif-card" data-task-id="${n.task_id}">
+          <div class="notif-top">
+            <span class="notif-title">${catIcon} ${escHtml(n.task_title)}</span>
+            <span class="notif-category">${displayCategory}</span>
+          </div>
+          <span class="notif-time">${fireLabel} · ${formatDT(n.fired_at)}</span>
+          <button class="ack-btn" onclick="doneTask('${n.task_id}')">
+            ${expired ? 'Clear ✓' : 'Done ✓'}
+          </button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function doneTask(taskId) {
+    document.querySelectorAll(`[data-task-id="${taskId}"]`).forEach(card => {
+      card.style.opacity = '0.4';
+      card.style.pointerEvents = 'none';
+    });
+    try {
+      await fetch(`${API}/notifications/${taskId}/done`, { method: 'POST', headers: authHeaders() });
+    } catch (_) {}
+    await refreshData();
+  }
+
+  async function updatePriority(taskId, newPriority) {
+    try {
+      const res = await fetch(`${API}/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: authHeaders(),
+        body: JSON.stringify({ priority: newPriority })
+      });
+      if (res.status === 401) { logout(); return; }
+      if (res.ok) {
+        await refreshData();
+      }
+    } catch (err) {
+      console.error('Error updating priority:', err);
+    }
+  }
+
+  function ordinal(n) {
+    const s = ['th', 'st', 'nd', 'rd'];
+    const v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  }
+
+  async function updateCount() {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API}/notifications/count`, { headers: authHeaders() });
+      if (res.status === 401) { logout(); return; }
+      const { count } = await res.json();
+      setBadge(count);
+    } catch (_) {}
+  }
+
+  function setBadge(count) {
+    const badge = document.getElementById('bellBadge');
+    if (count > 0) {
+      badge.textContent = count > 99 ? '99+' : count;
+      badge.classList.remove('hidden');
+    } else {
+      badge.classList.add('hidden');
+    }
+  }
+
+  document.addEventListener('click', e => {
+    if (bellOpen && !document.getElementById('bellWrapper').contains(e.target)) {
+      bellOpen = false;
+      document.getElementById('bellPanel').classList.add('hidden');
+    }
+  });
+
+  setInterval(updateCount, 30000);
+
+  async function setupPush() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    try {
+      _swReg = await navigator.serviceWorker.register('/sw.js');
+      if (_swReg.active) {
+        _swReg.active.postMessage({ type: 'SET_TOKEN', token });
+        _swReg.active.postMessage({ type: 'SET_BACKEND_URL', url: window.BACKEND_URL || '' });
+      }
+      navigator.serviceWorker.ready.then(reg => {
+        reg.active && reg.active.postMessage({ type: 'SET_TOKEN', token });
+        reg.active && reg.active.postMessage({ type: 'SET_BACKEND_URL', url: window.BACKEND_URL || '' });
+      });
+      const existing = await _swReg.pushManager.getSubscription();
+      if (existing) return;
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') return;
+      await subscribeToPush(_swReg);
+    } catch (err) {
+      console.warn('Push setup error:', err);
+    }
+  }
+
+  async function subscribeToPush(reg) {
+    try {
+      const keyRes = await fetch(`${API}/push/vapid-public-key`);
+      const { public_key } = await keyRes.json();
+      const applicationServerKey = urlBase64ToUint8Array(public_key);
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey,
+      });
+      const subJson = sub.toJSON();
+      await fetch(`${API}/push/subscribe`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({
+          endpoint: subJson.endpoint,
+          keys: { p256dh: subJson.keys.p256dh, auth: subJson.keys.auth },
+        }),
+      });
+    } catch (err) {
+      console.warn('Push subscribe error:', err);
+    }
+  }
+
+  function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const raw = window.atob(base64);
+    return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+  }
+
+  function handleUrlParams() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('bell') === '1') {
+      history.replaceState({}, '', '/');
+      setTimeout(() => { bellOpen = false; toggleBell(); }, 400);
+    }
+  }
+</script>
+</body>
+</html>

@@ -454,30 +454,54 @@
     }
     .auth-error.show { display: block; }
 
+    /* --- Chat UI Layout --- */
     .app {
       display: none;
       width: 100%;
-      min-height: 100vh;
+      height: 100vh;
+      overflow: hidden;
     }
     .app.visible {
       display: block;
     }
-    .container {
-      max-width: 900px;
+    .app-layout {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      max-width: 1400px;
       margin: 0 auto;
-      padding: 24px;
+    }
+    .chat-area {
+      flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 24px;
+      height: 100%;
+      position: relative;
+      border-right: 1px solid var(--border-color);
+      background: var(--surface-0);
     }
-
+    .right-sidebar {
+      width: 380px;
+      height: 100%;
+      background: var(--surface-1);
+      padding: 24px;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+    @media (max-width: 900px) {
+      .right-sidebar {
+        display: none;
+      }
+    }
+    
     .app-header {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
-      border-bottom: 0.5px solid var(--border-color);
-      padding-bottom: 16px;
-      gap: 20px;
+      align-items: center;
+      padding: 16px 24px;
+      background: var(--surface-1);
+      border-bottom: 1px solid var(--border-color);
+      z-index: 10;
     }
     .header-title-section {
       display: flex;
@@ -506,6 +530,186 @@
       align-items: center;
       gap: 12px;
     }
+    
+    .chat-history {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      scroll-behavior: smooth;
+    }
+    .message {
+      display: flex;
+      flex-direction: column;
+      max-width: 80%;
+      animation: messageIn 0.3s ease forwards;
+    }
+    @keyframes messageIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .message.user {
+      align-self: flex-end;
+    }
+    .message.user .message-content {
+      background: var(--primary-blue);
+      color: #fff;
+      border-radius: 18px 18px 4px 18px;
+    }
+    .message.agent {
+      align-self: flex-start;
+    }
+    .message.agent .message-content {
+      background: var(--surface-2);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      border-radius: 18px 18px 18px 4px;
+      box-shadow: var(--shadow-sm);
+    }
+    .message-content {
+      padding: 12px 16px;
+      font-size: 15px;
+      line-height: 1.5;
+      word-wrap: break-word;
+    }
+    .message-time {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      align-self: flex-end;
+    }
+    .message.agent .message-time {
+      align-self: flex-start;
+    }
+
+    .chat-input-wrapper {
+      padding: 16px 24px 24px;
+      background: linear-gradient(to top, var(--surface-0) 80%, transparent);
+      z-index: 10;
+    }
+    .chat-input-bar {
+      display: flex;
+      align-items: center;
+      background: var(--surface-2);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      padding: 6px 6px 6px 20px;
+      box-shadow: var(--shadow-md);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .chat-input-bar:focus-within {
+      border-color: var(--primary-blue);
+      box-shadow: 0 0 0 3px rgba(55, 138, 221, 0.15);
+    }
+    .chat-input-bar input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      color: var(--text-primary);
+      font-size: 15px;
+      outline: none;
+    }
+    .chat-input-bar input::placeholder {
+      color: var(--text-muted);
+    }
+    .chat-input-bar button {
+      background: var(--primary-blue);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: transform 0.15s, background 0.2s;
+      flex-shrink: 0;
+    }
+    .chat-input-bar button:hover {
+      transform: scale(1.05);
+      background: #2b6cb0;
+    }
+    .chat-input-bar button:disabled {
+      background: var(--border-color);
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .suggestions-scroller {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 12px;
+      scrollbar-width: none;
+    }
+    .suggestions-scroller::-webkit-scrollbar {
+      display: none;
+    }
+    .suggestion-chip {
+      background: var(--surface-1);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      padding: 6px 14px;
+      border-radius: 16px;
+      font-size: 13px;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .suggestion-chip:hover {
+      background: var(--surface-2);
+      border-color: var(--primary-blue);
+      color: var(--primary-blue);
+    }
+
+    /* Task Card inside Chat */
+    .chat-task-card {
+      margin-top: 12px;
+      background: var(--surface-1);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .chat-task-card .task-title {
+      font-weight: 500;
+      font-size: 15px;
+      margin-bottom: 8px;
+    }
+    .chat-task-card .task-meta {
+      font-size: 13px;
+      color: var(--text-secondary);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    
+    /* Stats Card inside Chat */
+    .chat-stats-card {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .chat-stats-box {
+      background: var(--surface-1);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+    }
+    .chat-stats-box .num {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--primary-blue);
+    }
+    .chat-stats-box .label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
     /* ── User chip – rounded rectangle ── */
     @keyframes chipShimmer {
       0%   { background-position: -200% center; }
@@ -1169,116 +1373,85 @@
 </div>
 
 <div id="mainApp" class="app">
-  <main class="container">
-    
-    <header class="app-header">
-      <div class="header-title-section">
-        <div class="title-group">
-          <h1>Reminders</h1>
-          <span class="badge-ai">AI-powered</span>
+  <div class="app-layout">
+    <!-- Chat Area -->
+    <main class="chat-area">
+      <header class="app-header">
+        <div class="header-title-section">
+          <div class="title-group">
+            <h1>SecondMind AI</h1>
+            <span class="badge-ai">Agent</span>
+          </div>
+          <p class="subtitle">I'm here to manage your tasks, reminders, and schedule.</p>
         </div>
-        <p class="subtitle">Natural language parsing, context awareness, and intelligent urgency.</p>
-      </div>
-      <div class="header-actions">
-        <div class="bell-wrapper" id="bellWrapper">
-          <button class="bell-btn" onclick="toggleBell()" aria-label="Reminders notifications">
-            🔔
-            <span class="bell-badge hidden" id="bellBadge">0</span>
-          </button>
-          <div class="bell-panel hidden" id="bellPanel">
-            <div class="bell-panel-header">
-              <span>Reminders</span>
-              <span class="bell-panel-sub" id="bellPanelSub"></span>
-            </div>
-            <div class="bell-notif-list" id="bellNotifList">
-              <div class="empty-notif">No pending reminders.</div>
+        <div class="header-actions">
+          <div class="bell-wrapper" id="bellWrapper">
+            <button class="bell-btn" onclick="toggleBell()" aria-label="Reminders notifications">
+              🔔
+              <span class="bell-badge hidden" id="bellBadge">0</span>
+            </button>
+            <div class="bell-panel hidden" id="bellPanel">
+              <div class="bell-panel-header">
+                <span>Reminders</span>
+                <span class="bell-panel-sub" id="bellPanelSub"></span>
+              </div>
+              <div class="bell-notif-list" id="bellNotifList">
+                <div class="empty-notif">No pending reminders.</div>
+              </div>
             </div>
           </div>
+          <button class="user-chip" onclick="openProfileModal()" aria-label="Edit profile">
+            <div class="user-avatar">👤</div>
+            <span id="userNameDisplay">User</span>
+          </button>
+          <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle theme">
+            <i class="ti ti-moon" id="appThemeIcon"></i>
+          </button>
+          <button class="logout-btn" onclick="logout()">Log out</button>
         </div>
-        <button class="user-chip" onclick="openProfileModal()" aria-label="Edit profile">
-          <div class="user-avatar">👤</div>
-          <span id="userNameDisplay">User</span>
-        </button>
-        <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle theme">
-          <i class="ti ti-moon" id="appThemeIcon"></i>
-        </button>
-        <button class="logout-btn" onclick="logout()">Log out</button>
-      </div>
-    </header>
+      </header>
 
-    <section class="input-section">
-      <div class="input-group" style="flex-wrap: wrap;">
-        <input id="taskInput" type="text" placeholder="Tell me what to remember... 'Call mom tomorrow at 3pm' or 'Follow up on project in 3 days'" aria-label="Quick task input" />
-
-        <button id="addBtn" onclick="submitTask()" aria-label="Add parsed reminder">
-          <i class="ti ti-plus"></i> Add
-        </button>
+      <div class="chat-history" id="chatHistory">
+        <!-- Initial greeting -->
+        <div class="message agent">
+          <div class="message-content">
+            Hello! I'm SecondMind. How can I help you today? You can ask me to schedule a task or show your insights.
+          </div>
+        </div>
       </div>
-      <div class="ai-insight-badge hidden" id="aiInsightBadge">
-        <i class="ti ti-sparkles"></i>
-        <span id="aiInsightText">Parsed: [Task] | [Time] | [Context]</span>
-      </div>
-    </section>
 
-    <section style="margin-bottom: 24px;">
-      <div class="card" id="upNextCard">
+      <div class="chat-input-wrapper">
+        <div class="suggestions-scroller" id="quickSuggestions">
+          <button class="suggestion-chip" onclick="useSuggestion('Show my insights')">Show my insights</button>
+          <button class="suggestion-chip" onclick="useSuggestion('Remind me to call John tomorrow at 5pm')">Remind me to call John tomorrow at 5pm</button>
+          <button class="suggestion-chip" onclick="useSuggestion('Schedule team standup every weekday at 10am')">Schedule team standup</button>
+          <button class="suggestion-chip" onclick="useSuggestion('Check my tasks for today')">Check my tasks for today</button>
+        </div>
+        <div class="chat-input-bar">
+          <input id="taskInput" type="text" placeholder="Message SecondMind..." autocomplete="off" />
+          <button id="addBtn" onclick="submitTask()" aria-label="Send message">
+            <i class="ti ti-send"></i>
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <!-- Right Sidebar -->
+    <aside class="right-sidebar">
+      <div class="card" id="upNextCard" style="height: 100%; display: flex; flex-direction: column;">
         <div class="card-header">
           <h2>Up next</h2>
           <div style="display:flex; align-items:center; gap:10px;">
             <button id="clearCompletedBtn" class="clear-completed-btn hidden" onclick="clearCompletedTasks()" aria-label="Clear all completed tasks">
-              <i class="ti ti-trash"></i> Clear completed (<span id="completedCount">0</span>)
+              <i class="ti ti-trash"></i> (<span id="completedCount">0</span>)
             </button>
-            <span class="badge-prioritized">prioritized by AI</span>
           </div>
         </div>
-        <div class="reminder-list" id="reminderList">
-        </div>
-      </div>
-    </section>
-
-    <section class="grid-two-col">
-      <div class="card" id="suggestionsCard">
-        <h2>Quick suggestions & Custom categories</h2>
-        <div class="suggestions-container" style="display:flex; flex-direction:column; gap:16px;">
-          <div>
-            <span class="field-label" style="margin-bottom:8px; display:block;">Quick Suggestions</span>
-            <div class="suggestion-chips">
-              <button class="chip" onclick="useSuggestion('Follow up on emails')">Follow up on emails</button>
-              <button class="chip" onclick="useSuggestion('Drink water reminder')">Drink water reminder</button>
-              <button class="chip" onclick="useSuggestion('Team standup')">Team standup</button>
-              <button class="chip" onclick="useSuggestion('Weekly sync scheduled')">Weekly sync scheduled</button>
-              <button class="chip" onclick="useSuggestion('Check calendar')">Check calendar</button>
-              <button class="chip" onclick="useSuggestion('Email response')">Email response</button>
-            </div>
-          </div>
-          <div style="border-top:0.5px solid var(--border-color); padding-top:16px;">
-            <span class="field-label" style="margin-bottom:8px; display:block;">Your Categories</span>
-            <div class="suggestion-chips" id="categoriesChips" style="margin-bottom:12px;">
-            </div>
-            <div class="input-group" style="gap:8px;">
-              <input id="newCategoryInput" type="text" placeholder="New category name..." style="height:32px; font-size:12px; flex:1; border:0.5px solid var(--border-color); border-radius:var(--radius-sm); padding:0 8px; background:var(--surface-2); color:var(--text-primary); outline:none;" />
-              <button onclick="addCustomCategory()" style="height:32px; background:var(--primary-blue); color:var(--surface-2); border:none; padding:0 12px; border-radius:var(--radius-sm); font-size:12px; cursor:pointer;">Add</button>
-            </div>
-          </div>
+        <div class="reminder-list" id="reminderList" style="flex: 1; overflow-y: auto;">
         </div>
       </div>
-
-      <div class="card" id="statsCard">
-        <h2>Today's stats</h2>
-        <div class="stats-grid">
-          <div class="stat-box">
-            <span class="stat-number" id="statRemindersCount">0</span>
-            <span class="stat-label">Reminders today</span>
-          </div>
-          <div class="stat-box">
-            <span class="stat-number" id="statOnTimeRate">0%</span>
-            <span class="stat-label">On-time rate</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-  </main>
+    </aside>
+  </div>
 </div>
 
 <!-- Profile Modal -->
@@ -1340,7 +1513,8 @@
 </div>
 
 <script>
-  const API = (window.BACKEND_URL || '') + '/api/v1';
+  const BACKEND_URL = window.BACKEND_URL || 'http://localhost:8000';
+  const API = `${BACKEND_URL}/api/v1`;
 
   let token = localStorage.getItem('sm_token');
   let userName = localStorage.getItem('sm_user');
@@ -1698,7 +1872,7 @@
   }
 
   function getUrgency(task) {
-    const prio = task.priority || 'medium';
+    const prio = task.severity || 'medium';
     if (prio === 'high') {
       return 'red';
     } else if (prio === 'medium') {
@@ -1720,7 +1894,7 @@
     const now = Date.now();
     const cat = (task.category || 'personal').toLowerCase();
     const type = (task.task_type || 'personal').toLowerCase();
-    const prio = (task.priority || 'medium').toLowerCase();
+    const prio = (task.severity || 'medium').toLowerCase();
     const retryEnabled = RETRY_ENABLED_CATS.has(cat);
 
     // ── 1. Time-based context ──────────────────────────────────────────────
@@ -1818,9 +1992,9 @@
             <div class="reminder-title-row">
               <span class="reminder-title">${escHtml(task.title)}</span>
               <div style="display:flex; gap:6px; align-items:center;">
-                <span class="priority-badge ${urgency}" title="Priority set by AI">
+                <span class="priority-badge ${urgency}" title="Severity set by AI">
                   <span class="ai-dot">✦</span>
-                  ${(task.priority || 'medium').charAt(0).toUpperCase() + (task.priority || 'medium').slice(1)}
+                  ${(task.severity || 'medium').charAt(0).toUpperCase() + (task.severity || 'medium').slice(1)}
                 </span>
                 <button class="done-btn" onclick="doneTask('${taskId}')" aria-label="Mark completed">
                   <i class="ti ti-check"></i> Done
@@ -1836,19 +2010,7 @@
   }
 
   function renderStats() {
-    const countEl = document.getElementById('statRemindersCount');
-    const rateEl = document.getElementById('statOnTimeRate');
-    const today = new Date().toDateString();
-    const todayTasks = tasks.filter(t => t.scheduled_time && new Date(t.scheduled_time).toDateString() === today);
-    const countToday = todayTasks.length;
     const completed = tasks.filter(t => t.status === 'completed' || t.status === 'done');
-    let rate = 0;
-    if (tasks.length > 0) {
-      rate = Math.round((completed.length / tasks.length) * 100);
-    }
-    countEl.textContent = countToday;
-    rateEl.textContent = `${rate}%`;
-
     const clearBtn = document.getElementById('clearCompletedBtn');
     const completedCountEl = document.getElementById('completedCount');
     if (clearBtn && completedCountEl) {
@@ -1908,64 +2070,114 @@
     }
   });
 
+  function appendMessage(role, content) {
+    const history = document.getElementById('chatHistory');
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `message ${role}`;
+    
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    
+    msgDiv.innerHTML = `
+      <div class="message-content">${content}</div>
+      <div class="message-time">${time}</div>
+    `;
+    
+    history.appendChild(msgDiv);
+    history.scrollTop = history.scrollHeight;
+  }
+
+  let currentController = null;
+
   async function submitTask() {
+    if (currentController) {
+      currentController.abort();
+      return;
+    }
     const input = document.getElementById('taskInput');
     const text = input.value.trim();
     if (!text) return;
-    if (badgeTimeout) clearTimeout(badgeTimeout);
-    const badge = document.getElementById('aiInsightBadge');
-    const badgeText = document.getElementById('aiInsightText');
+    
+    // Append user message
+    appendMessage('user', escHtml(text));
+    input.value = '';
+    
     const addBtn = document.getElementById('addBtn');
+    addBtn.innerHTML = '<i class="ti ti-square-rounded-x"></i>';
+    
+    currentController = new AbortController();
 
-    addBtn.disabled = true;
-    addBtn.innerHTML = 'Parsing...';
     try {
-      const res = await fetch(`${API}/tasks/parse`, {
+      const res = await fetch(`${API}/agent/chat`, {
         method: 'POST',
         headers: authHeaders(),
-        body: JSON.stringify({ text, category: null, priority: null }),
+        body: JSON.stringify({ text }),
+        signal: currentController.signal
       });
       const data = await res.json();
       if (res.status === 401) { logout(); return; }
-      if (res.status === 409) {
-        badgeText.textContent = `Conflict: "${data.detail.conflicting_task_title}" is already scheduled around this time.`;
-        badge.classList.remove('hidden');
-        badge.style.backgroundColor = 'rgba(226, 75, 74, 0.1)';
-        badge.style.color = 'var(--urgent-red)';
-        badge.style.borderColor = 'rgba(226, 75, 74, 0.2)';
-        badgeTimeout = setTimeout(() => { badge.classList.add('hidden'); }, 5000);
-        return;
-      }
-      if (!res.ok) {
-        badgeText.textContent = `Error: ${data.detail || 'Failed to parse task.'}`;
-        badge.classList.remove('hidden');
-        badge.style.backgroundColor = 'rgba(226, 75, 74, 0.1)';
-        badge.style.color = 'var(--urgent-red)';
-        return;
-      }
-      const timeStr = data.scheduled_time ? formatDT(data.scheduled_time) : 'Time flexible';
-      const cat = data.category || 'Personal';
-      const displayCategory = cat.charAt(0).toUpperCase() + cat.slice(1);
-      const prio = data.priority || 'medium';
-      const displayPriority = prio.charAt(0).toUpperCase() + prio.slice(1);
-      badgeText.textContent = `✦ AI: ${data.title} | ${timeStr} | ${displayCategory} | ${displayPriority} priority`;
-      badge.classList.remove('hidden');
-      badge.style.backgroundColor = 'rgba(55, 138, 221, 0.1)';
-      badge.style.color = 'var(--primary-blue)';
-      badge.style.borderColor = 'rgba(55, 138, 221, 0.2)';
 
-      input.value = '';
-      badgeTimeout = setTimeout(() => { badge.classList.add('hidden'); }, 3000);
-      await refreshData();
+      let agentContent = '';
+
+      if (data.intent === 'SHOW_INSIGHTS' && data.data) {
+        agentContent = `
+          <div>${escHtml(data.message)}</div>
+          <div class="chat-stats-card">
+            <div class="chat-stats-box">
+              <div class="num">${data.data.completed_tasks}</div>
+              <div class="label">Total Done</div>
+            </div>
+            <div class="chat-stats-box">
+              <div class="num">${data.data.completion_rate_percent}%</div>
+              <div class="label">On-time Rate</div>
+            </div>
+            <div class="chat-stats-box">
+              <div class="num">${data.data.scheduled_tasks}</div>
+              <div class="label">Pending</div>
+            </div>
+            <div class="chat-stats-box">
+              <div class="num">${data.data.completed_this_week}</div>
+              <div class="label">Done this week</div>
+            </div>
+          </div>
+        `;
+      } else if (data.intent === 'CREATE_TASK' && data.data && !data.data.conflict) {
+        const timeStr = data.data.scheduled_time ? formatDT(data.data.scheduled_time) : 'Time flexible';
+        const displayCategory = data.data.category ? data.data.category.charAt(0).toUpperCase() + data.data.category.slice(1) : 'Personal';
+        const sev = data.data.severity || 'medium';
+        const displaySeverity = sev.charAt(0).toUpperCase() + sev.slice(1);
+        
+        agentContent = `
+          <div>${escHtml(data.message)}</div>
+          <div class="chat-task-card">
+            <div class="task-title">📌 ${escHtml(data.data.title)}</div>
+            <div class="task-meta">
+              <span>⏰ ${timeStr}</span>
+              <span>🏷️ ${displayCategory}</span>
+              <span>✦ ${displaySeverity} severity</span>
+            </div>
+            <button onclick="document.getElementById('taskInput').value='${escHtml(text).replace(/'/g, "\\'")}'; document.getElementById('taskInput').focus();" style="margin-top: 8px; padding: 4px 8px; font-size: 12px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-2); cursor: pointer;">
+              <i class="ti ti-pencil"></i> Edit Original Task
+            </button>
+          </div>
+        `;
+        refreshData();
+      } else {
+        // Fallback for CREATE_TASK conflict, MANAGE_TASK, or errors
+        agentContent = `<div>${escHtml(data.message || 'Failed to process task.')}</div>`;
+      }
+
+      appendMessage('agent', agentContent);
     } catch (err) {
-      console.error(err);
-      badgeText.textContent = 'Error: Cannot reach server.';
-      badge.classList.remove('hidden');
-      badge.style.backgroundColor = 'rgba(226, 75, 74, 0.1)';
-      badge.style.color = 'var(--urgent-red)';
+      if (err.name === 'AbortError') {
+        appendMessage('agent', `⚠️ Request stopped.`);
+      } else {
+        console.error(err);
+        appendMessage('agent', `⚠️ Error: Cannot reach server.`);
+      }
     } finally {
+      currentController = null;
       addBtn.disabled = false;
-      addBtn.innerHTML = '<i class="ti ti-plus"></i> Add';
+      addBtn.innerHTML = '<i class="ti ti-send"></i>';
     }
   }
 
@@ -2040,7 +2252,7 @@
       const res = await fetch(`${API}/tasks/${taskId}`, {
         method: 'PATCH',
         headers: authHeaders(),
-        body: JSON.stringify({ priority: newPriority })
+        body: JSON.stringify({ severity: newPriority })
       });
       if (res.status === 401) { logout(); return; }
       if (res.ok) {
@@ -2092,11 +2304,13 @@
       _swReg = await navigator.serviceWorker.register('/sw.js');
       if (_swReg.active) {
         _swReg.active.postMessage({ type: 'SET_TOKEN', token });
-        _swReg.active.postMessage({ type: 'SET_BACKEND_URL', url: window.BACKEND_URL || '' });
+        _swReg.active.postMessage({ type: 'SET_BACKEND_URL', url: BACKEND_URL });
       }
       navigator.serviceWorker.ready.then(reg => {
-        reg.active && reg.active.postMessage({ type: 'SET_TOKEN', token });
-        reg.active && reg.active.postMessage({ type: 'SET_BACKEND_URL', url: window.BACKEND_URL || '' });
+        if (reg.active) {
+          reg.active.postMessage({ type: 'SET_TOKEN', token });
+          reg.active.postMessage({ type: 'SET_BACKEND_URL', url: BACKEND_URL });
+        }
       });
       const existing = await _swReg.pushManager.getSubscription();
       if (existing) return;

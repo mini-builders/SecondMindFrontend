@@ -1,4 +1,4 @@
 {
-  "buildCommand": "echo \"window.BACKEND_URL = '${BACKEND_URL}';\" > config.js",
+  "buildCommand": "echo \"window.BACKEND_URL = '${BACKEND_URL:-https://secondmind-backend-production.up.railway.app}';\" > config.js",
   "outputDirectory": "."
 }

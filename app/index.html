@@ -1112,6 +1112,10 @@
           <div class="auth-feature-icon">✨</div>
           Conflict detection & intelligent scheduling
         </div>
+        <div class="auth-feature-item">
+          <div class="auth-feature-icon" style="background:#25D366; color:white; border-color:#25D366; display:grid; place-items:center;"><i class="ti ti-brand-whatsapp" style="font-size:14px;"></i></div>
+          WhatsApp Bot — Message +91 97726 38175 to manage tasks
+        </div>
       </div>
     </div>
 
@@ -1144,13 +1148,36 @@
         </div>
         <div class="field">
           <label class="field-label" for="signupMobile">Mobile Number</label>
-          <input class="auth-input" type="tel" id="signupMobile" placeholder="9876543210" required />
+          <div style="display:flex; gap:8px; align-items:stretch;">
+            <input class="auth-input" type="tel" id="signupMobile" placeholder="9876543210" required style="flex:1;" />
+            <button type="button" id="sendOtpBtn" onclick="sendOtp()" style="padding:0 14px; background:linear-gradient(135deg,#1a56db,#7c3aed); color:#fff; border:none; border-radius:10px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; transition:all 0.2s; box-shadow:0 2px 8px rgba(26,86,219,0.3);">Send OTP</button>
+          </div>
         </div>
+
+        <!-- OTP tile — hidden until OTP is sent -->
+        <div id="otpTile" style="display:none; background:rgba(26,86,219,0.06); border:1px solid rgba(26,86,219,0.2); border-radius:10px; padding:14px; display:none; flex-direction:column; gap:10px;">
+          <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:#1a56db; font-weight:600;">
+            <i class="ti ti-brand-whatsapp" style="font-size:16px; color:#25D366;"></i>
+            OTP sent to your WhatsApp — check now!
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <input class="auth-input" type="text" id="otpInput" placeholder="Enter 6-digit OTP" maxlength="6" inputmode="numeric" pattern="[0-9]{6}" style="flex:1; letter-spacing:6px; font-size:18px; text-align:center; font-weight:700;" />
+            <button type="button" id="verifyOtpBtn" onclick="verifyOtp()" style="padding:0 14px; background:#25D366; color:#fff; border:none; border-radius:10px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; transition:all 0.2s;">Verify</button>
+          </div>
+          <div id="otpStatus" style="font-size:12px; display:none;"></div>
+          <button type="button" onclick="sendOtp(true)" style="background:transparent; border:none; font-size:11px; color:#64748b; cursor:pointer; text-align:left; padding:0;">Resend OTP</button>
+        </div>
+
+        <!-- Verified badge -->
+        <div id="otpVerifiedBadge" style="display:none; align-items:center; gap:6px; font-size:12px; font-weight:600; color:#22c55e; background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.2); border-radius:8px; padding:8px 12px;">
+          <i class="ti ti-circle-check" style="font-size:16px;"></i> Mobile number verified ✓
+        </div>
+
         <div class="field">
           <label class="field-label" for="signupPassword">Password</label>
           <input class="auth-input" type="password" id="signupPassword" placeholder="Min 6 characters" required minlength="6" />
         </div>
-        <button class="auth-submit" type="submit" id="signupBtn">Create Account</button>
+        <button class="auth-submit" type="submit" id="signupBtn" disabled style="opacity:0.45; cursor:not-allowed;">Verify mobile to continue</button>
       </form>
 
       <form class="auth-form hidden" id="loginForm" onsubmit="handleLogin(event)">
@@ -1163,7 +1190,68 @@
           <input class="auth-input" type="password" id="loginPassword" placeholder="Your password" required />
         </div>
         <button class="auth-submit" type="submit" id="loginBtn">Log In</button>
+        <button type="button" onclick="showForgotPassword()" style="background:transparent; border:none; color:#1a56db; font-size:12px; font-weight:500; cursor:pointer; text-align:center; padding:4px 0; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
+          Forgot password?
+        </button>
       </form>
+
+      <!-- ── Forgot Password Panel ── -->
+      <div id="forgotPanel" style="display:none; flex-direction:column; gap:14px;">
+        <!-- Header with back arrow -->
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button type="button" onclick="hideForgotPassword()" style="background:transparent; border:none; color:var(--auth-tab-inactive); cursor:pointer; font-size:20px; line-height:1; padding:0; display:flex; align-items:center;">
+            <i class="ti ti-arrow-left"></i>
+          </button>
+          <span style="font-size:14px; font-weight:600; color:var(--auth-logo-color);">Reset Password</span>
+        </div>
+        <p style="font-size:12px; color:var(--auth-tab-inactive); margin-top:-6px;">Enter your registered mobile number. We'll send an OTP via WhatsApp.</p>
+
+        <div id="fpError" class="auth-error"></div>
+        <div id="fpSuccess" class="auth-error" style="color:#22c55e; background:rgba(34,197,94,0.08); border-color:rgba(34,197,94,0.3);"></div>
+
+        <!-- Step 1: Mobile + Send OTP -->
+        <div id="fpStep1">
+          <div class="field">
+            <label class="field-label" for="fpMobile">Mobile Number</label>
+            <div style="display:flex; gap:8px; align-items:stretch;">
+              <input class="auth-input" type="tel" id="fpMobile" placeholder="9876543210" style="flex:1;" />
+              <button type="button" id="fpSendOtpBtn" onclick="fpSendOtp()" style="padding:0 14px; background:linear-gradient(135deg,#1a56db,#7c3aed); color:#fff; border:none; border-radius:10px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; box-shadow:0 2px 8px rgba(26,86,219,0.3);">Send OTP</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: OTP input tile (hidden until OTP sent) -->
+        <div id="fpOtpTile" style="display:none; background:rgba(26,86,219,0.06); border:1px solid rgba(26,86,219,0.2); border-radius:10px; padding:14px; flex-direction:column; gap:10px;">
+          <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:#1a56db; font-weight:600;">
+            <i class="ti ti-brand-whatsapp" style="font-size:16px; color:#25D366;"></i>
+            OTP sent to your WhatsApp — check now!
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <input class="auth-input" type="text" id="fpOtpInput" placeholder="Enter 6-digit OTP" maxlength="6" inputmode="numeric" style="flex:1; letter-spacing:6px; font-size:18px; text-align:center; font-weight:700;" />
+            <button type="button" id="fpVerifyOtpBtn" onclick="fpVerifyOtp()" style="padding:0 14px; background:#25D366; color:#fff; border:none; border-radius:10px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap;">Verify</button>
+          </div>
+          <div id="fpOtpStatus" style="font-size:12px; display:none;"></div>
+          <button type="button" onclick="fpSendOtp(true)" style="background:transparent; border:none; font-size:11px; color:#64748b; cursor:pointer; text-align:left; padding:0;">Resend OTP</button>
+        </div>
+
+        <!-- Verified badge -->
+        <div id="fpVerifiedBadge" style="display:none; align-items:center; gap:6px; font-size:12px; font-weight:600; color:#22c55e; background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.2); border-radius:8px; padding:8px 12px;">
+          <i class="ti ti-circle-check" style="font-size:16px;"></i> OTP Verified ✓
+        </div>
+
+        <!-- Step 3: New password (hidden until OTP verified) -->
+        <div id="fpStep3" style="display:none; flex-direction:column; gap:10px;">
+          <div class="field">
+            <label class="field-label" for="fpNewPwd">New Password</label>
+            <input class="auth-input" type="password" id="fpNewPwd" placeholder="Min 6 characters" minlength="6" />
+          </div>
+          <div class="field">
+            <label class="field-label" for="fpConfirmPwd">Confirm New Password</label>
+            <input class="auth-input" type="password" id="fpConfirmPwd" placeholder="Repeat new password" minlength="6" />
+          </div>
+          <button type="button" id="fpResetBtn" onclick="fpResetPassword()" class="auth-submit">Reset Password</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -1180,6 +1268,10 @@
         <p class="subtitle">Natural language parsing, context awareness, and intelligent urgency.</p>
       </div>
       <div class="header-actions">
+        <a href="https://wa.me/919772638175" target="_blank" class="bell-btn" style="text-decoration: none; color: #25D366; display: inline-flex; align-items: center; gap: 6px;" title="Chat with WhatsApp Bot" aria-label="Chat with WhatsApp Bot">
+          <i class="ti ti-brand-whatsapp" style="font-size: 18px;"></i>
+          <span style="font-size: 12px; font-weight: 500; color: var(--text-primary);">WhatsApp Bot</span>
+        </a>
         <div class="bell-wrapper" id="bellWrapper">
           <button class="bell-btn" onclick="toggleBell()" aria-label="Reminders notifications">
             🔔
@@ -1350,6 +1442,7 @@
   let bellOpen = false;
   let _swReg = null;
   let badgeTimeout = null;
+  let _otpVerified = false;
 
   function authHeaders() {
     return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
@@ -1411,6 +1504,18 @@
     document.getElementById('signupForm').classList.toggle('hidden', tab !== 'signup');
     document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
     clearAuthError();
+    // Reset OTP state when switching tabs
+    _otpVerified = false;
+    const otpTile = document.getElementById('otpTile');
+    const otpBadge = document.getElementById('otpVerifiedBadge');
+    const signupBtn = document.getElementById('signupBtn');
+    const otpInput = document.getElementById('otpInput');
+    const otpStatus = document.getElementById('otpStatus');
+    if (otpTile) otpTile.style.display = 'none';
+    if (otpBadge) otpBadge.style.display = 'none';
+    if (otpInput) otpInput.value = '';
+    if (otpStatus) otpStatus.style.display = 'none';
+    if (signupBtn) { signupBtn.disabled = true; signupBtn.style.opacity = '0.45'; signupBtn.style.cursor = 'not-allowed'; signupBtn.textContent = 'Verify mobile to continue'; }
   }
 
   function showAuthError(msg) {
@@ -1422,8 +1527,86 @@
     document.getElementById('authError').classList.remove('show');
   }
 
+  // ── OTP helpers ──────────────────────────────────────────────────────────
+  async function sendOtp(isResend = false) {
+    const mobile = document.getElementById('signupMobile').value.trim();
+    if (!mobile) { showAuthError('Please enter your mobile number first.'); return; }
+    clearAuthError();
+    const btn = document.getElementById('sendOtpBtn');
+    btn.disabled = true; btn.textContent = 'Sending...';
+    try {
+      const res = await fetch(`${API}/auth/otp/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mobile }),
+      });
+      const data = await res.json();
+      if (!res.ok) { showAuthError(data.detail || 'Could not send OTP.'); return; }
+      // Show OTP tile
+      const tile = document.getElementById('otpTile');
+      tile.style.display = 'flex';
+      tile.style.flexDirection = 'column';
+      document.getElementById('otpInput').value = '';
+      const statusEl = document.getElementById('otpStatus');
+      if (isResend) {
+        statusEl.textContent = '✅ New OTP sent!';
+        statusEl.style.color = '#22c55e';
+        statusEl.style.display = 'block';
+        setTimeout(() => { statusEl.style.display = 'none'; }, 2000);
+      }
+      document.getElementById('signupMobile').readOnly = true;
+    } catch (_) {
+      showAuthError('Cannot reach server.');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Resend';
+    }
+  }
+
+  async function verifyOtp() {
+    const mobile = document.getElementById('signupMobile').value.trim();
+    const otp = document.getElementById('otpInput').value.trim();
+    if (!otp || otp.length !== 6) {
+      const s = document.getElementById('otpStatus');
+      s.textContent = 'Please enter the 6-digit OTP.';
+      s.style.color = '#ef4444'; s.style.display = 'block';
+      return;
+    }
+    const btn = document.getElementById('verifyOtpBtn');
+    btn.disabled = true; btn.textContent = '...';
+    try {
+      const res = await fetch(`${API}/auth/otp/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mobile, otp }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        const s = document.getElementById('otpStatus');
+        s.textContent = data.detail || 'Invalid OTP.';
+        s.style.color = '#ef4444'; s.style.display = 'block';
+        return;
+      }
+      // OTP valid — hide tile, show verified badge, unlock signup
+      _otpVerified = true;
+      document.getElementById('otpTile').style.display = 'none';
+      const badge = document.getElementById('otpVerifiedBadge');
+      badge.style.display = 'flex';
+      const signupBtn = document.getElementById('signupBtn');
+      signupBtn.disabled = false;
+      signupBtn.style.opacity = '1';
+      signupBtn.style.cursor = 'pointer';
+      signupBtn.textContent = 'Create Account';
+    } catch (_) {
+      const s = document.getElementById('otpStatus');
+      s.textContent = 'Cannot reach server.'; s.style.color = '#ef4444'; s.style.display = 'block';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Verify';
+    }
+  }
+
   async function handleSignup(e) {
     e.preventDefault();
+    if (!_otpVerified) { showAuthError('Please verify your mobile number first.'); return; }
     clearAuthError();
     const btn = document.getElementById('signupBtn');
     btn.disabled = true; btn.textContent = 'Creating account...';
@@ -1470,6 +1653,146 @@
       btn.disabled = false; btn.textContent = 'Log In';
     }
   }
+
+  // ── Forgot Password helpers ───────────────────────────────────────────────
+  let _fpOtpVerified = false;
+  let _fpVerifiedMobile = '';
+
+  function showForgotPassword() {
+    clearAuthError();
+    document.getElementById('loginForm').style.display = 'none';
+    const panel = document.getElementById('forgotPanel');
+    panel.style.display = 'flex';
+    panel.style.flexDirection = 'column';
+    _fpOtpVerified = false;
+    _fpVerifiedMobile = '';
+    ['fpError','fpSuccess'].forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove('show'); });
+    document.getElementById('fpMobile').value = '';
+    document.getElementById('fpOtpInput').value = '';
+    document.getElementById('fpNewPwd').value = '';
+    document.getElementById('fpConfirmPwd').value = '';
+    document.getElementById('fpOtpTile').style.display = 'none';
+    document.getElementById('fpVerifiedBadge').style.display = 'none';
+    document.getElementById('fpStep3').style.display = 'none';
+    document.getElementById('fpSendOtpBtn').textContent = 'Send OTP';
+  }
+
+  function hideForgotPassword() {
+    document.getElementById('forgotPanel').style.display = 'none';
+    document.getElementById('loginForm').style.display = '';
+    clearAuthError();
+  }
+
+  function _fpShowError(msg) {
+    const el = document.getElementById('fpError');
+    el.textContent = msg; el.classList.add('show');
+  }
+  function _fpHideError() {
+    document.getElementById('fpError').classList.remove('show');
+  }
+  function _fpShowSuccess(msg) {
+    const el = document.getElementById('fpSuccess');
+    el.textContent = msg; el.classList.add('show');
+  }
+
+  async function fpSendOtp(isResend = false) {
+    const mobile = document.getElementById('fpMobile').value.trim();
+    if (!mobile) { _fpShowError('Please enter your mobile number.'); return; }
+    _fpHideError();
+    const btn = document.getElementById('fpSendOtpBtn');
+    btn.disabled = true; btn.textContent = 'Sending...';
+    try {
+      const res = await fetch(`${API}/auth/otp/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mobile }),
+      });
+      const data = await res.json();
+      if (!res.ok) { _fpShowError(data.detail || 'Could not send OTP.'); return; }
+      const tile = document.getElementById('fpOtpTile');
+      tile.style.display = 'flex';
+      tile.style.flexDirection = 'column';
+      document.getElementById('fpOtpInput').value = '';
+      document.getElementById('fpMobile').readOnly = true;
+      if (isResend) {
+        const s = document.getElementById('fpOtpStatus');
+        s.textContent = '✅ New OTP sent!'; s.style.color = '#22c55e'; s.style.display = 'block';
+        setTimeout(() => { s.style.display = 'none'; }, 2000);
+      }
+    } catch (_) {
+      _fpShowError('Cannot reach server.');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Resend';
+    }
+  }
+
+  async function fpVerifyOtp() {
+    const mobile = document.getElementById('fpMobile').value.trim();
+    const otp = document.getElementById('fpOtpInput').value.trim();
+    if (!otp || otp.length !== 6) {
+      const s = document.getElementById('fpOtpStatus');
+      s.textContent = 'Please enter the 6-digit OTP.'; s.style.color = '#ef4444'; s.style.display = 'block';
+      return;
+    }
+    const btn = document.getElementById('fpVerifyOtpBtn');
+    btn.disabled = true; btn.textContent = '...';
+    try {
+      const res = await fetch(`${API}/auth/otp/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mobile, otp }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        const s = document.getElementById('fpOtpStatus');
+        s.textContent = data.detail || 'Invalid OTP.'; s.style.color = '#ef4444'; s.style.display = 'block';
+        return;
+      }
+      _fpOtpVerified = true;
+      _fpVerifiedMobile = mobile;
+      document.getElementById('fpOtpTile').style.display = 'none';
+      const badge = document.getElementById('fpVerifiedBadge');
+      badge.style.display = 'flex';
+      const step3 = document.getElementById('fpStep3');
+      step3.style.display = 'flex';
+      step3.style.flexDirection = 'column';
+    } catch (_) {
+      const s = document.getElementById('fpOtpStatus');
+      s.textContent = 'Cannot reach server.'; s.style.color = '#ef4444'; s.style.display = 'block';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Verify';
+    }
+  }
+
+  async function fpResetPassword() {
+    if (!_fpOtpVerified) { _fpShowError('Please verify your OTP first.'); return; }
+    const newPwd = document.getElementById('fpNewPwd').value;
+    const confirmPwd = document.getElementById('fpConfirmPwd').value;
+    if (!newPwd || newPwd.length < 6) { _fpShowError('Password must be at least 6 characters.'); return; }
+    if (newPwd !== confirmPwd) { _fpShowError('Passwords do not match.'); return; }
+    _fpHideError();
+    const btn = document.getElementById('fpResetBtn');
+    btn.disabled = true; btn.textContent = 'Resetting...';
+    try {
+      const res = await fetch(`${API}/auth/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mobile: _fpVerifiedMobile, new_password: newPwd }),
+      });
+      const data = await res.json();
+      if (!res.ok) { _fpShowError(data.detail || 'Reset failed.'); return; }
+      _fpShowSuccess('✅ Password reset! Redirecting to login...');
+      setTimeout(() => {
+        hideForgotPassword();
+        switchTab('login');
+      }, 1800);
+    } catch (_) {
+      _fpShowError('Cannot reach server.');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Reset Password';
+    }
+  }
+
 
   function saveSession(data) {
     token = data.access_token;

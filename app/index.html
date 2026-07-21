@@ -2116,7 +2116,7 @@
     document.getElementById('userNameDisplay').textContent = userName || 'User';
     document.getElementById('taskInput').value = '';
     const badge = document.getElementById('aiInsightBadge');
-    badge.classList.add('hidden');
+    if (badge) badge.classList.add('hidden');
 
     Promise.all([fetchCategories(), refreshData()]).catch(err => {
       console.error('Boot error:', err);
@@ -2380,7 +2380,7 @@
 
   document.getElementById('taskInput').addEventListener('input', () => {
     const badge = document.getElementById('aiInsightBadge');
-    badge.classList.add('hidden');
+    if (badge) badge.classList.add('hidden');
     if (badgeTimeout) {
       clearTimeout(badgeTimeout);
     }
